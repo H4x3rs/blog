@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import NProgress from 'nprogress'
 import Layout from '../layout/Layout.vue'
 import AdminLayout from '../layout/AdminLayout.vue'
@@ -189,7 +189,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes,
   scrollBehavior(to, from, savedPosition) {
     // 如果有保存的位置（浏览器前进/后退），则返回到该位置

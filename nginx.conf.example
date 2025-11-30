@@ -63,11 +63,10 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
-    # 前端路由（Vue Router）
-    # 所有其他请求都返回 index.html，由 Vue Router 处理
-    # 这个 location 必须放在最后，只处理非静态资源的请求
+    # 前端路由（Vue Router Hash 模式）
+    # Hash 模式下，所有非静态资源的请求都返回 index.html
+    # Hash 路由由前端处理，不需要服务器端配置
     location / {
-        # 先尝试找文件，找不到再尝试目录，最后返回 index.html
         try_files $uri $uri/ /index.html;
     }
 }
