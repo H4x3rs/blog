@@ -1,5 +1,12 @@
 # Nginx 配置示例
 # 用于 blog.renhj.cc 域名的代理配置
+# 
+# 使用方法：
+# 1. 将 /path/to/blog 替换为实际的项目路径
+# 2. 将配置文件复制到 /etc/nginx/sites-available/blog.renhj.cc
+# 3. 创建软链接: ln -s /etc/nginx/sites-available/blog.renhj.cc /etc/nginx/sites-enabled/
+# 4. 测试配置: nginx -t
+# 5. 重载配置: nginx -s reload 或 systemctl reload nginx
 
 server {
     listen 80;
@@ -10,16 +17,12 @@ server {
     # ssl_certificate /path/to/cert.pem;
     # ssl_certificate_key /path/to/key.pem;
 
-    # 前端静态文件
+    # 前端静态文件根目录
+    # 注意：请将 /path/to/blog 替换为实际的项目路径
     root /path/to/blog/fronted/dist;
     index index.html;
 
-    # 前端路由（Vue Router）
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # API 请求代理到后端
+    # API 请求代理到后端（必须在其他 location 之前，避免被其他规则匹配）
     # 前端请求: /api/article/getList
     # Nginx 转发到: http://127.0.0.1:8000/article/getList (去掉 /api 前缀)
     location /api {
@@ -42,10 +45,29 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
-    # 其他静态资源
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+    # 前端静态资源文件（assets 目录下的 JS、CSS 等）
+    # 这些文件需要直接返回，不走 Vue Router
+    # 例如: /assets/index-p_smhSHX.js
+    # 使用精确匹配确保优先级高于 location /
+    location ^~ /assets {
+        try_files $uri =404;
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
-}
 
+    # 其他静态资源（logo、vite.svg 等根目录下的文件）
+    # 使用正则匹配，优先级高于 location /
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        try_files $uri =404;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # 前端路由（Vue Router）
+    # 所有其他请求都返回 index.html，由 Vue Router 处理
+    # 这个 location 必须放在最后，只处理非静态资源的请求
+    location / {
+        # 先尝试找文件，找不到再尝试目录，最后返回 index.html
+        try_files $uri $uri/ /index.html;
+    }
+}
