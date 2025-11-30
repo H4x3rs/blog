@@ -79,15 +79,15 @@ const routes = [
     ]
   },
   // 登录
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('../views/Login.vue'),
-    meta: { title: '登录' }
-  },
+  // {
+  //   path: '/login',
+  //   name: 'Login',
+  //   component: () => import('../views/Login.vue'),
+  //   meta: { title: '登录' }
+  // },
   // 新版登录页面
   {
-    path: '/login-new',
+    path: '/login',
     name: 'LoginNew',
     component: () => import('../views/LoginNew.vue'),
     meta: { title: '登录（新版）' }
