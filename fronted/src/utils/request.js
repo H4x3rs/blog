@@ -1,13 +1,10 @@
 import axios from 'axios'
 
-// 生产环境使用完整域名，开发环境使用相对路径
+// 统一使用 /api 前缀，由 Nginx（生产环境）或 Vite Proxy（开发环境）转发到后端
+// 生产环境：Nginx 会将 /api 请求转发到后端服务器
+// 开发环境：Vite Proxy 会将 /api 请求转发到 http://localhost:8000
 const getBaseURL = () => {
-  // 检查是否为生产环境
-  if (import.meta.env.MODE === 'production') {
-    // 生产环境使用完整域名
-    return import.meta.env.VITE_API_BASE_URL || 'https://blog.renhj.cc/api'
-  }
-  // 开发环境使用相对路径（通过 vite proxy）
+  // 统一使用相对路径 /api，由代理服务器处理转发
   return '/api'
 }
 

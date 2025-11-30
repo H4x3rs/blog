@@ -274,17 +274,15 @@ const initEditor = () => {
           console.log('上传响应:', res)
           
           if (res && res.url) {
-                // 构建完整的图片URL（如果是相对路径，需要加上后端地址）
+                // 构建完整的图片URL
+                // 后端返回的 URL 如果是相对路径（如 /uploads/images/xxx.jpg），直接使用
+                // 如果是绝对路径，直接使用
                 let imageUrl = res.url
-                if (imageUrl.startsWith('/')) {
-                  // 相对路径，需要加上后端地址
-                  if (import.meta.env.MODE === 'production') {
-                    // 生产环境使用完整域名
-                    imageUrl = `${import.meta.env.VITE_API_BASE_URL || 'https://blog.renhj.cc'}${res.url}`
-                  } else {
-                    // 开发环境使用 localhost
-                    imageUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}${res.url}`
-                  }
+                // 如果后端返回的是相对路径，直接使用（浏览器会自动使用当前域名）
+                // 不需要手动添加域名，因为前后端在同一域名下
+                if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+                  // 相对路径，直接使用（浏览器会自动使用当前域名）
+                  // 例如：/uploads/images/xxx.jpg 会被解析为 https://blog.renhj.cc/uploads/images/xxx.jpg
                 }
             
             // 调用 callback 函数，将图片URL传递给编辑器
