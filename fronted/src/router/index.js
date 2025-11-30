@@ -90,7 +90,7 @@ const routes = [
     path: '/login',
     name: 'LoginNew',
     component: () => import('../views/LoginNew.vue'),
-    meta: { title: '登录（新版）' }
+    meta: { title: '登录' }
   },
   // 注册页面
   {

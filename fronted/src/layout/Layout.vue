@@ -43,7 +43,7 @@
             </template>
           </el-dropdown>
           <!-- 未登录：显示登录按钮 -->
-          <el-button v-else class="login-btn" round @click="$router.push('/login-new')">登录 / 注册</el-button>
+          <el-button v-else class="login-btn" round @click="$router.push('/login')">登录 / 注册</el-button>
         </div>
 
         <!-- Mobile Menu Toggle -->
