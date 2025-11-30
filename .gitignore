@@ -29,3 +29,6 @@ Thumbs.db
 *.tmp
 *.temp
 
+
+node_modules
+fronted/node_modules
