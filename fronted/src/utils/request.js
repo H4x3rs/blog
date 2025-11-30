@@ -1,7 +1,18 @@
 import axios from 'axios'
 
+// 生产环境使用完整域名，开发环境使用相对路径
+const getBaseURL = () => {
+  // 检查是否为生产环境
+  if (import.meta.env.MODE === 'production') {
+    // 生产环境使用完整域名
+    return import.meta.env.VITE_API_BASE_URL || 'https://blog.renhj.cc/api'
+  }
+  // 开发环境使用相对路径（通过 vite proxy）
+  return '/api'
+}
+
 const service = axios.create({
-  baseURL: '/api', // Proxy will handle this
+  baseURL: getBaseURL(),
   timeout: 5000
 })
 
