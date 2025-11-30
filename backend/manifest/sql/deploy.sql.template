@@ -1,0 +1,413 @@
+-- =================================================================================
+-- 博客系统数据库部署脚本（模板文件）
+-- Database: ${DB_NAME}
+-- Version: 1.0
+-- Description: 包含完整的DDL语句和默认数据
+-- Usage: 使用 deploy.sh 或 deploy.bat 脚本自动替换环境变量
+-- =================================================================================
+
+-- ============================================
+-- 1. 设置字符集（必须在最前面）
+-- ============================================
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+SET character_set_client = utf8mb4;
+SET character_set_connection = utf8mb4;
+SET character_set_results = utf8mb4;
+SET collation_connection = utf8mb4_unicode_ci;
+
+-- ============================================
+-- 2. 创建数据库
+-- ============================================
+CREATE DATABASE IF NOT EXISTS ${DB_NAME} DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE ${DB_NAME};
+
+-- 再次确保字符集
+SET NAMES utf8mb4;
+
+-- ============================================
+-- 3. 创建表结构（DDL）
+-- ============================================
+
+-- 3.1 用户表
+CREATE TABLE IF NOT EXISTS `user` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) NOT NULL COMMENT '用户名',
+  `password` varchar(100) NOT NULL COMMENT '密码',
+  `nickname` varchar(50) DEFAULT NULL COMMENT '昵称',
+  `email` varchar(100) DEFAULT NULL COMMENT '邮箱',
+  `avatar` varchar(255) DEFAULT NULL COMMENT '头像',
+  `bio` varchar(500) DEFAULT NULL COMMENT '个人简介',
+  `status` tinyint(1) DEFAULT 1 COMMENT '状态:0禁用,1启用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户表';
+
+-- 3.2 分类表
+CREATE TABLE IF NOT EXISTS `category` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL COMMENT '分类名称',
+  `slug` varchar(100) NOT NULL COMMENT '别名',
+  `icon` varchar(100) DEFAULT NULL COMMENT '图标名称（Element Plus图标组件名）',
+  `description` varchar(500) DEFAULT NULL COMMENT '分类描述',
+  `count` int(11) DEFAULT 0 COMMENT '文章数',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `slug` (`slug`),
+  KEY `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='分类表';
+
+-- 3.3 标签表
+CREATE TABLE IF NOT EXISTS `tag` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL COMMENT '标签名称',
+  `slug` varchar(100) NOT NULL COMMENT '别名',
+  `color` varchar(20) DEFAULT '#409EFF' COMMENT '颜色',
+  `count` int(11) DEFAULT 0 COMMENT '文章数',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `slug` (`slug`),
+  KEY `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='标签表';
+
+-- 3.4 文章表
+CREATE TABLE IF NOT EXISTS `article` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL COMMENT '文章标题',
+  `desc` varchar(255) DEFAULT NULL COMMENT '文章摘要',
+  `content` text NOT NULL COMMENT '文章内容',
+  `cover_image` varchar(255) DEFAULT NULL COMMENT '封面图片',
+  `category_id` int(11) DEFAULT NULL COMMENT '分类ID',
+  `status` varchar(20) DEFAULT 'draft' COMMENT '状态:published,draft',
+  `views` int(11) DEFAULT 0 COMMENT '阅读数',
+  `created_by` int(11) DEFAULT NULL COMMENT '创建人员ID',
+  `updated_by` int(11) DEFAULT NULL COMMENT '更新人员ID',
+  `published_by` int(11) DEFAULT NULL COMMENT '发布人员ID',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_category_id` (`category_id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_created_by` (`created_by`),
+  KEY `idx_updated_by` (`updated_by`),
+  KEY `idx_published_by` (`published_by`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文章表';
+
+-- 3.5 专题表
+CREATE TABLE IF NOT EXISTS `topic` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL COMMENT '专题名称',
+  `slug` varchar(100) NOT NULL COMMENT '别名',
+  `description` varchar(500) DEFAULT NULL COMMENT '专题描述',
+  `cover_image` varchar(255) DEFAULT NULL COMMENT '封面图片',
+  `intro` text DEFAULT NULL COMMENT '专题介绍',
+  `is_featured` tinyint(1) DEFAULT 0 COMMENT '是否置顶:0否,1是',
+  `sort_order` int(11) DEFAULT 0 COMMENT '排序',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `slug` (`slug`),
+  KEY `idx_is_featured` (`is_featured`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='专题表';
+
+-- 3.6 专题文章关联表
+CREATE TABLE IF NOT EXISTS `topic_article` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `topic_id` int(11) NOT NULL COMMENT '专题ID',
+  `article_id` int(11) NOT NULL COMMENT '文章ID',
+  `sort_order` int(11) DEFAULT 0 COMMENT '排序',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_topic_article` (`topic_id`, `article_id`),
+  KEY `idx_topic_id` (`topic_id`),
+  KEY `idx_article_id` (`article_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='专题文章关联表';
+
+-- 3.7 角色表
+CREATE TABLE IF NOT EXISTS `role` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL COMMENT '角色名称',
+  `key` varchar(50) NOT NULL COMMENT '角色标识',
+  `desc` varchar(255) DEFAULT NULL COMMENT '角色描述',
+  `status` tinyint(1) DEFAULT 1 COMMENT '状态:0禁用,1启用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`),
+  KEY `idx_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色表';
+
+-- 3.8 权限表
+CREATE TABLE IF NOT EXISTS `permission` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `parent_id` int(11) DEFAULT 0 COMMENT '父权限ID',
+  `name` varchar(50) NOT NULL COMMENT '权限名称',
+  `code` varchar(100) NOT NULL COMMENT '权限标识',
+  `type` varchar(20) NOT NULL COMMENT '类型:menu菜单,btn按钮',
+  `path` varchar(255) DEFAULT NULL COMMENT '路径',
+  `icon` varchar(50) DEFAULT NULL COMMENT '图标',
+  `sort_order` int(11) DEFAULT 0 COMMENT '排序',
+  `status` tinyint(1) DEFAULT 1 COMMENT '状态:0禁用,1启用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`),
+  KEY `idx_parent_id` (`parent_id`),
+  KEY `idx_type` (`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='权限表';
+
+-- 3.9 菜单表
+CREATE TABLE IF NOT EXISTS `menu` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `parent_id` int(11) DEFAULT 0 COMMENT '父菜单ID',
+  `type` varchar(20) NOT NULL COMMENT '类型:M目录,C菜单,F按钮',
+  `title` varchar(50) NOT NULL COMMENT '菜单标题',
+  `icon` varchar(50) DEFAULT NULL COMMENT '图标',
+  `path` varchar(255) DEFAULT NULL COMMENT '路由路径',
+  `component` varchar(255) DEFAULT NULL COMMENT '组件路径',
+  `permission` varchar(100) DEFAULT NULL COMMENT '权限标识',
+  `order` int(11) DEFAULT 0 COMMENT '排序',
+  `status` varchar(20) DEFAULT 'active' COMMENT '状态:active激活,inactive禁用',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_parent_id` (`parent_id`),
+  KEY `idx_type` (`type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='菜单表';
+
+-- 3.10 系统设置表
+CREATE TABLE IF NOT EXISTS `settings` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `key` varchar(100) NOT NULL COMMENT '设置键',
+  `value` text DEFAULT NULL COMMENT '设置值',
+  `type` varchar(20) DEFAULT 'string' COMMENT '类型:string,number,boolean,json',
+  `desc` varchar(255) DEFAULT NULL COMMENT '描述',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `key` (`key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系统设置表';
+
+-- 3.11 用户角色关联表
+CREATE TABLE IF NOT EXISTS `user_role` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL COMMENT '用户ID',
+  `role_id` int(11) NOT NULL COMMENT '角色ID',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_user_role` (`user_id`, `role_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_role_id` (`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户角色关联表';
+
+-- 3.12 角色权限关联表
+CREATE TABLE IF NOT EXISTS `role_permission` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `role_id` int(11) NOT NULL COMMENT '角色ID',
+  `permission_id` int(11) NOT NULL COMMENT '权限ID',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_role_permission` (`role_id`, `permission_id`),
+  KEY `idx_role_id` (`role_id`),
+  KEY `idx_permission_id` (`permission_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色权限关联表';
+
+-- ============================================
+-- 4. 插入默认数据
+-- ============================================
+
+-- 4.1 插入默认角色
+INSERT INTO `role` (`name`, `key`, `desc`, `status`) VALUES
+('超级管理员', 'admin', '拥有所有权限', 1),
+('编辑', 'editor', '内容管理权限', 1),
+('访客', 'guest', '只读权限', 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- 4.2 插入默认用户
+INSERT INTO `user` (`username`, `password`, `nickname`, `email`, `avatar`, `status`) VALUES
+('${ADMIN_USERNAME}', '${ADMIN_PASSWORD}', '${ADMIN_NICKNAME}', '${ADMIN_EMAIL}', 'https://i.pravatar.cc/150?img=1', 1)
+ON DUPLICATE KEY UPDATE `username`=VALUES(`username`);
+
+-- 4.3 插入权限数据
+-- Level 1: Dashboard Permission
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `icon`, `sort_order`, `status`) VALUES
+(0, '仪表盘', 'dashboard:view', 'menu', '/admin/dashboard', 'Odometer', 0, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 1: Main Menus
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `icon`, `sort_order`, `status`) VALUES
+(0, '内容管理', 'content:manage', 'menu', '/admin/content', 'DocumentCopy', 1, 1),
+(0, '系统管理', 'system:manage', 'menu', '/admin/system', 'Setting', 2, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 2: Content Management Children
+SET @content_manage_id = (SELECT id FROM permission WHERE code = 'content:manage' LIMIT 1);
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `icon`, `sort_order`, `status`) VALUES
+(@content_manage_id, '文章管理', 'content:article:manage', 'menu', '/admin/articles', 'Document', 1, 1),
+(@content_manage_id, '分类管理', 'content:category:manage', 'menu', '/admin/category', 'Files', 2, 1),
+(@content_manage_id, '标签管理', 'content:tag:manage', 'menu', '/admin/tags', 'CollectionTag', 3, 1),
+(@content_manage_id, '专题管理', 'content:topic:manage', 'menu', '/admin/topics', 'Reading', 4, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 3: Article Management Buttons
+SET @article_manage_id = (SELECT id FROM permission WHERE code = 'content:article:manage' LIMIT 1);
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `sort_order`, `status`) VALUES
+(@article_manage_id, '文章列表', 'content:article:list', 'btn', '', 1, 1),
+(@article_manage_id, '创建文章', 'content:article:create', 'btn', '', 2, 1),
+(@article_manage_id, '更新文章', 'content:article:update', 'btn', '', 3, 1),
+(@article_manage_id, '删除文章', 'content:article:delete', 'btn', '', 4, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 3: Category Management Buttons
+SET @category_manage_id = (SELECT id FROM permission WHERE code = 'content:category:manage' LIMIT 1);
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `sort_order`, `status`) VALUES
+(@category_manage_id, '分类列表', 'content:category:list', 'btn', '', 1, 1),
+(@category_manage_id, '创建分类', 'content:category:create', 'btn', '', 2, 1),
+(@category_manage_id, '更新分类', 'content:category:update', 'btn', '', 3, 1),
+(@category_manage_id, '删除分类', 'content:category:delete', 'btn', '', 4, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 3: Tag Management Buttons
+SET @tag_manage_id = (SELECT id FROM permission WHERE code = 'content:tag:manage' LIMIT 1);
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `sort_order`, `status`) VALUES
+(@tag_manage_id, '标签列表', 'content:tag:list', 'btn', '', 1, 1),
+(@tag_manage_id, '创建标签', 'content:tag:create', 'btn', '', 2, 1),
+(@tag_manage_id, '更新标签', 'content:tag:update', 'btn', '', 3, 1),
+(@tag_manage_id, '删除标签', 'content:tag:delete', 'btn', '', 4, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 3: Topic Management Buttons
+SET @topic_manage_id = (SELECT id FROM permission WHERE code = 'content:topic:manage' LIMIT 1);
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `sort_order`, `status`) VALUES
+(@topic_manage_id, '专题列表', 'content:topic:list', 'btn', '', 1, 1),
+(@topic_manage_id, '创建专题', 'content:topic:create', 'btn', '', 2, 1),
+(@topic_manage_id, '更新专题', 'content:topic:update', 'btn', '', 3, 1),
+(@topic_manage_id, '删除专题', 'content:topic:delete', 'btn', '', 4, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 2: System Management Children
+SET @system_manage_id = (SELECT id FROM permission WHERE code = 'system:manage' LIMIT 1);
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `icon`, `sort_order`, `status`) VALUES
+(@system_manage_id, '用户管理', 'system:user:manage', 'menu', '/admin/users', 'User', 1, 1),
+(@system_manage_id, '角色管理', 'system:role:manage', 'menu', '/admin/roles', 'Avatar', 2, 1),
+(@system_manage_id, '权限管理', 'system:permission:manage', 'menu', '/admin/permissions', 'Key', 3, 1),
+(@system_manage_id, '菜单管理', 'system:menu:manage', 'menu', '/admin/menus', 'Menu', 4, 1),
+(@system_manage_id, '系统设置', 'system:settings:manage', 'menu', '/admin/settings', 'Setting', 5, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 3: User Management Buttons
+SET @user_manage_id = (SELECT id FROM permission WHERE code = 'system:user:manage' LIMIT 1);
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `sort_order`, `status`) VALUES
+(@user_manage_id, '用户列表', 'system:user:list', 'btn', '', 1, 1),
+(@user_manage_id, '创建用户', 'system:user:create', 'btn', '', 2, 1),
+(@user_manage_id, '更新用户', 'system:user:update', 'btn', '', 3, 1),
+(@user_manage_id, '删除用户', 'system:user:delete', 'btn', '', 4, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 3: Role Management Buttons
+SET @role_manage_id = (SELECT id FROM permission WHERE code = 'system:role:manage' LIMIT 1);
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `sort_order`, `status`) VALUES
+(@role_manage_id, '角色列表', 'system:role:list', 'btn', '', 1, 1),
+(@role_manage_id, '创建角色', 'system:role:create', 'btn', '', 2, 1),
+(@role_manage_id, '更新角色', 'system:role:update', 'btn', '', 3, 1),
+(@role_manage_id, '删除角色', 'system:role:delete', 'btn', '', 4, 1),
+(@role_manage_id, '角色权限', 'system:role:permission', 'btn', '', 5, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 3: Permission Management Buttons
+SET @permission_manage_id = (SELECT id FROM permission WHERE code = 'system:permission:manage' LIMIT 1);
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `sort_order`, `status`) VALUES
+(@permission_manage_id, '权限列表', 'system:permission:list', 'btn', '', 1, 1),
+(@permission_manage_id, '创建权限', 'system:permission:create', 'btn', '', 2, 1),
+(@permission_manage_id, '更新权限', 'system:permission:update', 'btn', '', 3, 1),
+(@permission_manage_id, '删除权限', 'system:permission:delete', 'btn', '', 4, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- Level 3: Menu Management Buttons
+SET @menu_manage_id = (SELECT id FROM permission WHERE code = 'system:menu:manage' LIMIT 1);
+INSERT INTO `permission` (`parent_id`, `name`, `code`, `type`, `path`, `sort_order`, `status`) VALUES
+(@menu_manage_id, '菜单列表', 'system:menu:list', 'btn', '', 1, 1),
+(@menu_manage_id, '创建菜单', 'system:menu:create', 'btn', '', 2, 1),
+(@menu_manage_id, '更新菜单', 'system:menu:update', 'btn', '', 3, 1),
+(@menu_manage_id, '删除菜单', 'system:menu:delete', 'btn', '', 4, 1)
+ON DUPLICATE KEY UPDATE `name`=VALUES(`name`);
+
+-- 4.4 插入菜单数据
+-- Level 1: Dashboard (仪表盘)
+INSERT INTO `menu` (`parent_id`, `type`, `title`, `icon`, `path`, `component`, `permission`, `order`, `status`) VALUES
+(0, 'C', '仪表盘', 'Odometer', '/admin/dashboard', 'views/admin/Dashboard', 'dashboard:view', 0, 'active')
+ON DUPLICATE KEY UPDATE `title`=VALUES(`title`);
+
+-- Level 1: Main Directories
+INSERT INTO `menu` (`parent_id`, `type`, `title`, `icon`, `path`, `order`, `status`) VALUES
+(0, 'M', '内容管理', 'DocumentCopy', '/admin/content', 1, 'active'),
+(0, 'M', '系统管理', 'Setting', '/admin/system', 2, 'active')
+ON DUPLICATE KEY UPDATE `title`=VALUES(`title`);
+
+-- Level 2: Content Management Children
+SET @content_menu_id = (SELECT id FROM menu WHERE path = '/admin/content' AND type = 'M' LIMIT 1);
+INSERT INTO `menu` (`parent_id`, `type`, `title`, `icon`, `path`, `component`, `permission`, `order`, `status`) VALUES
+(@content_menu_id, 'C', '文章管理', 'Document', '/admin/articles', 'views/admin/ArticleManage', 'content:article:list', 1, 'active'),
+(@content_menu_id, 'C', '分类管理', 'Files', '/admin/category', 'views/admin/CategoryManage', 'content:category:list', 2, 'active'),
+(@content_menu_id, 'C', '标签管理', 'CollectionTag', '/admin/tags', 'views/admin/TagManage', 'content:tag:list', 3, 'active'),
+(@content_menu_id, 'C', '专题管理', 'Reading', '/admin/topics', 'views/admin/TopicManage', 'content:topic:list', 4, 'active')
+ON DUPLICATE KEY UPDATE `title`=VALUES(`title`);
+
+-- Level 2: System Management Children
+SET @system_menu_id = (SELECT id FROM menu WHERE path = '/admin/system' AND type = 'M' LIMIT 1);
+INSERT INTO `menu` (`parent_id`, `type`, `title`, `icon`, `path`, `component`, `permission`, `order`, `status`) VALUES
+(@system_menu_id, 'C', '用户管理', 'User', '/admin/users', 'views/admin/UserManage', 'system:user:list', 1, 'active'),
+(@system_menu_id, 'C', '角色管理', 'Avatar', '/admin/roles', 'views/admin/RoleManage', 'system:role:list', 2, 'active'),
+(@system_menu_id, 'C', '权限管理', 'Key', '/admin/permissions', 'views/admin/PermissionManage', 'system:permission:list', 3, 'active'),
+(@system_menu_id, 'C', '菜单管理', 'Menu', '/admin/menus', 'views/admin/MenuManage', 'system:menu:list', 4, 'active'),
+(@system_menu_id, 'C', '系统设置', 'Setting', '/admin/settings', 'views/admin/Settings', 'system:settings:manage', 5, 'active')
+ON DUPLICATE KEY UPDATE `title`=VALUES(`title`);
+
+-- 4.5 分配权限给角色
+-- Super Admin gets all permissions
+SET @admin_role_id = (SELECT id FROM role WHERE `key` = 'admin' LIMIT 1);
+INSERT INTO `role_permission` (`role_id`, `permission_id`)
+SELECT @admin_role_id, id FROM permission
+ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
+
+-- Editor gets content management permissions
+SET @editor_role_id = (SELECT id FROM role WHERE `key` = 'editor' LIMIT 1);
+INSERT INTO `role_permission` (`role_id`, `permission_id`)
+SELECT @editor_role_id, id FROM permission 
+WHERE code LIKE 'content:%'
+ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
+
+-- Guest gets read-only permissions (only list permissions)
+SET @guest_role_id = (SELECT id FROM role WHERE `key` = 'guest' LIMIT 1);
+INSERT INTO `role_permission` (`role_id`, `permission_id`)
+SELECT @guest_role_id, id FROM permission 
+WHERE code LIKE '%:list' OR code = 'system:settings:manage'
+ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
+
+-- 4.6 给管理员用户分配超级管理员角色
+INSERT INTO `user_role` (`user_id`, `role_id`)
+SELECT u.id, r.id FROM `user` u, `role` r 
+WHERE u.username = '${ADMIN_USERNAME}' AND r.key = 'admin'
+ON DUPLICATE KEY UPDATE `user_id`=VALUES(`user_id`);
+
+-- 4.7 插入系统设置
+INSERT INTO `settings` (`key`, `value`, `type`, `desc`) VALUES
+('siteName', '${SITE_NAME}', 'string', '网站名称'),
+('siteDesc', '${SITE_DESC}', 'string', '网站描述'),
+('title', '${SITE_TITLE}', 'string', '网站标题'),
+('subtitle', '${SITE_SUBTITLE}', 'string', '网站副标题'),
+('keywords', '${SITE_KEYWORDS}', 'string', '关键词'),
+('copyright', '${SITE_COPYRIGHT}', 'string', '版权信息')
+ON DUPLICATE KEY UPDATE `value`=VALUES(`value`);
+
+-- ============================================
+-- 5. 完成提示
+-- ============================================
+SELECT 'Database deployed successfully!' AS message;
+SELECT CONCAT('Default admin user: ', '${ADMIN_USERNAME}', ' / ', '${ADMIN_PASSWORD}') AS info;
+
