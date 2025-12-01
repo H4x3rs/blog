@@ -29,6 +29,7 @@ type TopicColumns struct {
 	Intro       string // 专题介绍
 	IsFeatured  string // 是否置顶:0否,1是
 	SortOrder   string // 排序
+	Views       string // 阅读数
 	CreatedAt   string //
 	UpdatedAt   string //
 }
@@ -43,6 +44,7 @@ var topicColumns = TopicColumns{
 	Intro:       "intro",
 	IsFeatured:  "is_featured",
 	SortOrder:   "sort_order",
+	Views:       "views",
 	CreatedAt:   "created_at",
 	UpdatedAt:   "updated_at",
 }

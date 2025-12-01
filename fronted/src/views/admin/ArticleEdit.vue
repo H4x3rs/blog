@@ -99,6 +99,30 @@
           </el-col>
         </el-row>
 
+        <el-form-item label="标签">
+          <el-select
+            v-model="form.tagIds"
+            multiple
+            filterable
+            allow-create
+            default-first-option
+            placeholder="请选择或输入标签"
+            style="width: 100%"
+            size="large"
+          >
+            <el-option
+              v-for="tag in tags"
+              :key="tag.id"
+              :label="tag.name"
+              :value="tag.id"
+            >
+              <span style="display: flex; align-items: center; gap: 8px">
+                <el-tag :color="tag.color" effect="plain" size="small">{{ tag.name }}</el-tag>
+              </span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="文章摘要" prop="desc">
           <el-input 
             v-model="form.desc" 
@@ -150,6 +174,7 @@ import 'cherry-markdown/dist/cherry-markdown.min.css'
 import * as echarts from 'echarts'
 import { getArticle, createArticle, updateArticle } from '@/api/article'
 import { getCategoryList } from '@/api/category'
+import { getTagList } from '@/api/tag'
 import { uploadImage } from '@/api/upload'
 
 const route = useRoute()
@@ -166,6 +191,8 @@ const isEdit = ref(false)
 
 // 分类列表
 const categories = ref([])
+// 标签列表
+const tags = ref([])
 
 // 表单数据
 const form = reactive({
@@ -174,7 +201,8 @@ const form = reactive({
   desc: '',
   content: '',
   coverImage: '',
-  status: 'draft'
+  status: 'draft',
+  tagIds: []
 })
 
 // 表单验证规则
@@ -343,6 +371,18 @@ const loadCategories = async () => {
   }
 }
 
+// 加载标签列表
+const loadTags = async () => {
+  try {
+    const res = await getTagList({ page: 1, size: 100 })
+    if (res && res.list) {
+      tags.value = res.list
+    }
+  } catch (error) {
+    console.error('加载标签列表失败:', error)
+  }
+}
+
 // 加载文章数据
 const loadArticle = async () => {
   if (!articleId.value) return
@@ -356,6 +396,13 @@ const loadArticle = async () => {
       form.content = res.content || ''
       form.coverImage = res.coverImage || ''
       form.status = res.status || 'draft'
+      
+      // 加载文章标签
+      if (res.tags && Array.isArray(res.tags)) {
+        form.tagIds = res.tags.map(tag => tag.id)
+      } else {
+        form.tagIds = []
+      }
       
       // 更新编辑器内容，需要等待编辑器初始化完成
       if (cherryInstance) {
@@ -462,8 +509,8 @@ onMounted(async () => {
     isEdit.value = true
   }
 
-  // 加载分类列表
-  await loadCategories()
+  // 加载分类列表和标签列表
+  await Promise.all([loadCategories(), loadTags()])
 
   // 如果是编辑模式，先加载文章数据
   if (isEdit.value) {

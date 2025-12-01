@@ -6,6 +6,9 @@ import (
 
 	"blog/internal/dao"
 	"blog/internal/model/entity"
+
+	"github.com/gogf/gf/v2/database/gdb"
+	"github.com/gogf/gf/v2/frame/g"
 )
 
 type sTopic struct{}
@@ -44,7 +47,29 @@ func (s *sTopic) GetList(ctx context.Context, name string, page, size int) (list
 
 func (s *sTopic) GetOne(ctx context.Context, id int) (topic *entity.Topic, err error) {
 	err = dao.Topic.Ctx(ctx).Where(dao.Topic.Columns().Id, id).Scan(&topic)
-	return
+	if err != nil {
+		return nil, err
+	}
+	if topic == nil {
+		return nil, nil
+	}
+
+	// 增加阅读量（使用原子操作，避免并发问题）
+	_, err = dao.Topic.Ctx(ctx).
+		Where(dao.Topic.Columns().Id, id).
+		Data(gdb.Map{
+			dao.Topic.Columns().Views: gdb.Raw("`views` + 1"),
+		}).
+		Update()
+	if err != nil {
+		// 如果增加阅读量失败，记录错误但不影响返回专题
+		g.Log().Errorf(ctx, "增加专题阅读量失败: %v", err)
+	} else {
+		// 更新返回的专题对象的阅读量
+		topic.Views++
+	}
+
+	return topic, nil
 }
 
 func (s *sTopic) Delete(ctx context.Context, id int) (err error) {

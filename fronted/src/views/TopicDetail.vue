@@ -216,7 +216,7 @@ const loadTopic = async () => {
         cover: res.coverImage || 'https://picsum.photos/id/' + res.id + '/1200/600',
         tags: [],
         articleCount: 0,
-        views: 0,
+        views: res.views || 0,
         status: '连载中',
         updateFrequency: '每周更新',
         author: {

@@ -8,6 +8,7 @@ import (
 	"blog/internal/model/do"
 	"blog/internal/model/entity"
 
+	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
 )
 
@@ -39,6 +40,20 @@ func (s *sArticle) GetOne(ctx context.Context, id int, userId int) (out *entity.
 
 	// 如果是已发布的文章，所有用户都可以查看（前台显示）
 	if tempArticle.Status == "published" {
+		// 增加阅读量（使用原子操作，避免并发问题）
+		_, err = dao.Article.Ctx(ctx).
+			Where(dao.Article.Columns().Id, id).
+			Data(gdb.Map{
+				dao.Article.Columns().Views: gdb.Raw("`views` + 1"),
+			}).
+			Update()
+		if err != nil {
+			// 如果增加阅读量失败，记录错误但不影响返回文章
+			g.Log().Errorf(ctx, "增加文章阅读量失败: %v", err)
+		} else {
+			// 更新返回的文章对象的阅读量
+			tempArticle.Views++
+		}
 		return tempArticle, nil
 	}
 
@@ -191,6 +206,61 @@ func (s *sArticle) Delete(ctx context.Context, id int, userId int) (err error) {
 		}
 	}
 
+	// 删除文章标签关联
+	_, err = dao.ArticleTag.Ctx(ctx).Where(dao.ArticleTag.Columns().ArticleId, id).Delete()
+	if err != nil {
+		g.Log().Errorf(ctx, "删除文章标签关联失败: %v", err)
+	}
+
 	_, err = dao.Article.Ctx(ctx).Where(dao.Article.Columns().Id, id).Delete()
+	return
+}
+
+// 设置文章标签
+func (s *sArticle) SetArticleTags(ctx context.Context, articleId int, tagIds []int) (err error) {
+	// 先删除原有的标签关联
+	_, err = dao.ArticleTag.Ctx(ctx).Where(dao.ArticleTag.Columns().ArticleId, articleId).Delete()
+	if err != nil {
+		return err
+	}
+
+	// 批量插入新的标签关联
+	if len(tagIds) > 0 {
+		data := make([]map[string]interface{}, 0, len(tagIds))
+		for _, tagId := range tagIds {
+			data = append(data, map[string]interface{}{
+				"article_id": articleId,
+				"tag_id":     tagId,
+			})
+		}
+		_, err = dao.ArticleTag.Ctx(ctx).Data(data).Insert()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// 获取文章标签
+func (s *sArticle) GetArticleTags(ctx context.Context, articleId int) (tags []*entity.Tag, err error) {
+	var articleTags []*entity.ArticleTag
+	err = dao.ArticleTag.Ctx(ctx).
+		Where(dao.ArticleTag.Columns().ArticleId, articleId).
+		Scan(&articleTags)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(articleTags) == 0 {
+		return []*entity.Tag{}, nil
+	}
+
+	tagIds := make([]int, 0, len(articleTags))
+	for _, at := range articleTags {
+		tagIds = append(tagIds, at.TagId)
+	}
+
+	err = dao.Tag.Ctx(ctx).WhereIn(dao.Tag.Columns().Id, tagIds).Scan(&tags)
 	return
 }

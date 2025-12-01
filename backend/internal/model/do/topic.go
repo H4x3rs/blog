@@ -20,6 +20,7 @@ type Topic struct {
 	Intro       any         // 专题介绍
 	IsFeatured  any         // 是否置顶:0否,1是
 	SortOrder   any         // 排序
+	Views       any         // 阅读数
 	CreatedAt   *gtime.Time //
 	UpdatedAt   *gtime.Time //
 }

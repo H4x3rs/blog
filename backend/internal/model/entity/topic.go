@@ -18,6 +18,7 @@ type Topic struct {
 	Intro       string      `json:"intro"       orm:"intro"       ` // 专题介绍
 	IsFeatured  int         `json:"isFeatured"  orm:"is_featured" ` // 是否置顶:0否,1是
 	SortOrder   int         `json:"sortOrder"   orm:"sort_order"  ` // 排序
+	Views       int         `json:"views"       orm:"views"        ` // 阅读数
 	CreatedAt   *gtime.Time `json:"createdAt"   orm:"created_at"  ` //
 	UpdatedAt   *gtime.Time `json:"updatedAt"   orm:"updated_at"  ` //
 }
