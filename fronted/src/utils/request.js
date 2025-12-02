@@ -10,7 +10,7 @@ const getBaseURL = () => {
 
 const service = axios.create({
   baseURL: getBaseURL(),
-  timeout: 5000
+  timeout: 60000 // 60秒超时，AI对话需要更长的响应时间
 })
 
 service.interceptors.request.use(

@@ -68,7 +68,17 @@
           
           <div class="article-footer">
             <div class="tags-list">
-              <el-tag v-for="tag in article.tags" :key="tag" class="tag-item" effect="plain"># {{ tag }}</el-tag>
+              <el-tag
+                v-for="tag in article.tags"
+                :key="typeof tag === 'object' ? tag.id : tag"
+                class="tag-item"
+                effect="plain"
+                :style="typeof tag === 'object' && tag.color ? { borderColor: tag.color, color: tag.color } : {}"
+                @click="goToTag(tag)"
+                style="cursor: pointer;"
+              >
+                # {{ typeof tag === 'object' ? tag.name : tag }}
+              </el-tag>
             </div>
             <div class="actions">
                <el-button type="primary" plain round size="small">
@@ -94,14 +104,18 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Star, Share } from '@element-plus/icons-vue'
+import { Star, Share, ArrowRight } from '@element-plus/icons-vue'
 import { marked } from 'marked'
 import { getArticle } from '@/api/article'
 import { ElMessage } from 'element-plus'
+import { updateSEO, generateArticleSEO } from '@/utils/seo'
+import { useSiteConfig } from '@/store/site'
 
 const route = useRoute()
 const router = useRouter()
 const articleId = route.params.id
+const { siteName, bannerSubtitle } = useSiteConfig()
+const siteUrl = window.location.origin
 
 const article = ref({
   id: articleId,
@@ -140,6 +154,18 @@ const loadArticle = async () => {
   try {
     const res = await getArticle({ id: parseInt(articleId) })
     if (res) {
+      // 处理tags：如果是对象数组，保留对象；如果是字符串数组，保留字符串；如果是字符串，转换为数组
+      let tags = []
+      if (res.tags) {
+        if (Array.isArray(res.tags)) {
+          // 已经是数组，直接使用
+          tags = res.tags
+        } else if (typeof res.tags === 'string') {
+          // 字符串，按逗号分割
+          tags = res.tags.split(',').map(t => t.trim()).filter(t => t)
+        }
+      }
+      
       article.value = {
         id: res.id,
         title: res.title || '',
@@ -147,10 +173,24 @@ const loadArticle = async () => {
         createdAt: formatDate(res.createdAt),
         views: res.views || 0,
         cover: res.coverImage || 'https://picsum.photos/id/' + res.id + '/1200/600',
-        tags: res.tags ? (typeof res.tags === 'string' ? res.tags.split(',') : res.tags) : [],
+        tags: tags,
         content: res.content || '',
-        publishedByUser: res.publishedByUser || null
+        publishedByUser: res.publishedByUser || null,
+        topic: res.topic || null,
+        // 保存原始数据用于SEO
+        desc: res.desc || '',
+        coverImage: res.coverImage || '',
+        updatedAt: res.updatedAt || res.createdAt
       }
+      
+      // 设置文章页面的SEO
+      const seoConfig = generateArticleSEO({
+        ...res,
+        tags: tags,
+        category: res.categoryName || ''
+      }, siteName.value || 'Blog System', bannerSubtitle.value || '', siteUrl)
+      
+      updateSEO(seoConfig)
     }
   } catch (error) {
     console.error('加载文章失败:', error)
@@ -183,6 +223,23 @@ const handleLinkClick = (e) => {
 const goToAuthorArticles = (user) => {
   if (user && user.id) {
     router.push(`/author/${user.id}`)
+  }
+}
+
+// 跳转到标签详情页
+const goToTag = (tag) => {
+  if (tag) {
+    const slug = typeof tag === 'object' ? tag.slug : tag
+    if (slug) {
+      router.push(`/tag/${slug}`)
+    }
+  }
+}
+
+// 跳转到专题详情页
+const goToTopic = () => {
+  if (article.value.topic && article.value.topic.id) {
+    router.push(`/topic/${article.value.topic.id}`)
   }
 }
 

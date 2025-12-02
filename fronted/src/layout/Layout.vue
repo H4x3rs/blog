@@ -151,8 +151,8 @@
       <div class="footer-bottom">
         <div class="copyright">
            &copy; 2024 {{ siteName || 'Blog System' }}. All rights reserved. 
-           <span class="divider">|</span> 
-           <a href="#">京ICP备88888888号</a>
+           <span v-if="icpNumber" class="divider">|</span> 
+           <a v-if="icpNumber" :href="`https://beian.miit.gov.cn/`" target="_blank" rel="noopener noreferrer">{{ icpNumber }}</a>
         </div>
         <div class="powered-by">
            Powered by GoFrame & Vue 3
@@ -174,7 +174,12 @@ import 'element-plus/theme-chalk/display.css' // Helper classes for responsive
 const router = useRouter()
 const route = useRoute()
 const mobileMenuVisible = ref(false)
-const { siteName } = useSiteConfig()
+const { siteName, icpNumber } = useSiteConfig()
+
+// 调试日志
+watch(icpNumber, (newVal) => {
+  console.log('ICP备案号变化:', newVal)
+}, { immediate: true })
 
 // 用户信息
 const userInfo = ref({

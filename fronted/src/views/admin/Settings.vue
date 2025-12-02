@@ -110,6 +110,17 @@
                   clearable
                 />
               </el-form-item>
+
+              <el-form-item label="ICP备案号" prop="icpNumber">
+                <el-input 
+                  v-model="form.icpNumber" 
+                  placeholder="请输入ICP备案号，例如：京ICP备2021032569号"
+                  maxlength="50"
+                  show-word-limit
+                  clearable
+                />
+                <div class="form-tip">ICP备案号将显示在网站底部</div>
+              </el-form-item>
             </el-card>
 
             <!-- 操作按钮 -->
@@ -323,6 +334,7 @@ const form = reactive({
   siteDesc: '',
   keywords: '',
   copyright: '',
+  icpNumber: '',
   aboutAvatar: '',
   aboutSubtitle: '',
   aboutContent: defaultAboutContent,
@@ -338,6 +350,7 @@ const originalForm = reactive({
   siteDesc: '',
   keywords: '',
   copyright: '',
+  icpNumber: '',
   aboutAvatar: '',
   aboutSubtitle: '',
   aboutContent: defaultAboutContent,
@@ -366,6 +379,9 @@ const rules = {
   ],
   copyright: [
     { max: 200, message: '长度不能超过 200 个字符', trigger: 'blur' }
+  ],
+  icpNumber: [
+    { max: 50, message: '长度不能超过 50 个字符', trigger: 'blur' }
   ]
 }
 
@@ -392,7 +408,9 @@ const aboutRules = {
 const fetchSettings = async () => {
   try {
     const res = await getSettings()
+    console.log('获取系统设置:', res) // 调试日志
     Object.assign(form, res)
+    console.log('表单数据:', form) // 调试日志
     // 如果 aboutContent 为空，使用默认值
     if (!form.aboutContent || form.aboutContent.trim() === '') {
       form.aboutContent = defaultAboutContent

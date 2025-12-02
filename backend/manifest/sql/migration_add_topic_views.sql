@@ -9,6 +9,5 @@ ALTER TABLE `topic`
 ADD COLUMN IF NOT EXISTS `views` int(11) DEFAULT 0 COMMENT '阅读数' AFTER `sort_order`;
 
 -- 如果数据库不支持 IF NOT EXISTS，可以使用以下方式：
--- ALTER TABLE `topic` 
--- ADD COLUMN `views` int(11) DEFAULT 0 COMMENT '阅读数' AFTER `sort_order`;
+-- ALTER TABLE `topic` ADD COLUMN `views` int(11) DEFAULT 0 COMMENT '阅读数' AFTER `sort_order`;
 

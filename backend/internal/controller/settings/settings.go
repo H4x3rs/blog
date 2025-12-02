@@ -24,6 +24,7 @@ type GetSettingsRes struct {
 	Copyright   string `json:"copyright"`
 	Title       string `json:"title"`
 	Subtitle    string `json:"subtitle"`
+	IcpNumber   string `json:"icpNumber"`
 	AboutAvatar string `json:"aboutAvatar"`
 	AboutSubtitle string `json:"aboutSubtitle"`
 	AboutContent string `json:"aboutContent"`
@@ -39,6 +40,7 @@ type UpdateSettingsReq struct {
 	Copyright     string `json:"copyright"`
 	Title         string `json:"title"`
 	Subtitle      string `json:"subtitle"`
+	IcpNumber     string `json:"icpNumber"`
 	AboutAvatar   string `json:"aboutAvatar"`
 	AboutSubtitle string `json:"aboutSubtitle"`
 	AboutContent  string `json:"aboutContent"`
@@ -55,6 +57,7 @@ type GetBannerRes struct {
 	Title    string `json:"title"`
 	Subtitle string `json:"subtitle"`
 	SiteName string `json:"siteName"` // 网站名称，用于浏览器标题
+	IcpNumber string `json:"icpNumber"` // ICP备案号
 }
 
 // 前台获取关于我页面信息
@@ -83,10 +86,12 @@ func (c *ControllerV1) GetBanner(ctx context.Context, req *GetBannerReq) (res *G
 	if err != nil || siteName == "" {
 		siteName = "Blog System" // 默认值
 	}
+	icpNumber, _ := service.Settings.Get(ctx, "icpNumber")
 	return &GetBannerRes{
-		Title:    title,
-		Subtitle: subtitle,
-		SiteName: siteName,
+		Title:     title,
+		Subtitle:  subtitle,
+		SiteName:  siteName,
+		IcpNumber: icpNumber,
 	}, nil
 }
 
@@ -133,6 +138,7 @@ func (c *ControllerV1) GetSettings(ctx context.Context, req *GetSettingsReq) (re
 		Copyright:     settings["copyright"],
 		Title:         settings["title"],
 		Subtitle:      settings["subtitle"],
+		IcpNumber:     settings["icpNumber"],
 		AboutAvatar:   settings["aboutAvatar"],
 		AboutSubtitle: settings["aboutSubtitle"],
 		AboutContent:  settings["aboutContent"],
@@ -147,7 +153,9 @@ func (c *ControllerV1) UpdateSettings(ctx context.Context, req *UpdateSettingsRe
 		"siteDesc":      req.SiteDesc,
 		"keywords":      req.Keywords,
 		"copyright":     req.Copyright,
+		"title":         req.Title,
 		"subtitle":      req.Subtitle,
+		"icpNumber":     req.IcpNumber,
 		"aboutAvatar":   req.AboutAvatar,
 		"aboutSubtitle": req.AboutSubtitle,
 		"aboutContent":  req.AboutContent,

@@ -3,6 +3,7 @@ import NProgress from 'nprogress'
 import Layout from '../layout/Layout.vue'
 import AdminLayout from '../layout/AdminLayout.vue'
 import { useSiteConfig, initSiteConfig } from '../store/site'
+import { updateSEO, setPageTitle } from '../utils/seo'
 
 const routes = [
   // 前台路由
@@ -183,6 +184,12 @@ const routes = [
         name: 'Profile',
         component: () => import('../views/admin/Profile.vue'),
         meta: { title: '个人中心' }
+      },
+      {
+        path: 'chat',
+        name: 'Chat',
+        component: () => import('../views/admin/Chat.vue'),
+        meta: { title: 'AI 对话' }
       }
     ]
   }
@@ -207,10 +214,22 @@ NProgress.configure({ showSpinner: false })
 
 router.beforeEach((to, from, next) => {
   NProgress.start()
-  const { siteName } = useSiteConfig()
+  const { siteName, bannerSubtitle } = useSiteConfig()
   const pageTitle = to.meta.title || '首页'
   const siteTitle = siteName.value || 'Blog System'
-  document.title = `${pageTitle} - ${siteTitle}`
+  const siteUrl = window.location.origin
+  
+  // 设置页面标题
+  setPageTitle(pageTitle, siteTitle)
+  
+  // 设置基础SEO（页面特定的SEO会在组件中设置）
+  updateSEO({
+    title: `${pageTitle} - ${siteTitle}`,
+    description: to.meta.description || bannerSubtitle.value || '分享编程心得，记录技术成长。分享 Go, Vue, 云原生等前沿技术心得。',
+    keywords: to.meta.keywords || 'Go, Vue, Cloud Native, 编程, 技术博客',
+    url: `${siteUrl}${to.fullPath}`,
+    type: 'website'
+  })
   
   // 检查是否需要登录
   const token = localStorage.getItem('token')

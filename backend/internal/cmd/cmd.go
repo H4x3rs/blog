@@ -10,6 +10,7 @@ import (
 
 	"blog/internal/controller/article"
 	"blog/internal/controller/category"
+	"blog/internal/controller/chat"
 	"blog/internal/controller/hello"
 	"blog/internal/controller/menu"
 	"blog/internal/controller/oauth"
@@ -82,6 +83,7 @@ var (
 					settings.NewV1(),
 					oauth.NewV1(),
 					upload.NewV1(),
+					chat.NewV1(),
 				)
 			})
 			s.Run()

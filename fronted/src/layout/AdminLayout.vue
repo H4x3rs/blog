@@ -177,7 +177,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Odometer, Document, HomeFilled, ArrowDown, Fold, Expand,
-  Files, CollectionTag, Reading, User, Avatar, Key, Setting, DocumentCopy, Menu
+  Files, CollectionTag, Reading, User, Avatar, Key, Setting, DocumentCopy, Menu, ChatLineRound
 } from '@element-plus/icons-vue'
 import { useSiteConfig } from '../store/site'
 import { getCurrentUser } from '../api/user'
@@ -202,7 +202,8 @@ const iconMap = {
   'Avatar': Avatar,
   'Key': Key,
   'Setting': Setting,
-  'Menu': Menu
+  'Menu': Menu,
+  'ChatLineRound': ChatLineRound
 }
 
 // 获取图标组件
