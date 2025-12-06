@@ -3,8 +3,11 @@ package upload
 import (
 	"context"
 	"fmt"
+	"io"
 	"path/filepath"
 	"strings"
+
+	"blog/internal/service"
 
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
@@ -86,23 +89,30 @@ func (c *ControllerV1) UploadFile(ctx context.Context, req *UploadFileReq) (res 
 		uploadDir = "uploads/files"
 	}
 
-	// 创建上传目录（如果不存在）
-	uploadPath := filepath.Join("public", uploadDir)
-	if !gfile.Exists(uploadPath) {
-		if err := gfile.Mkdir(uploadPath); err != nil {
-			return nil, gerror.Wrap(err, "创建上传目录失败")
-		}
-	}
+	// OSS对象键（文件路径）
+	objectKey := fmt.Sprintf("%s/%s", uploadDir, filename)
 
-	// 保存文件
-	savePath := filepath.Join(uploadPath, filename)
-	_, err = file.Save(savePath)
+	// 读取文件内容
+	fileReader, err := file.Open()
 	if err != nil {
-		return nil, gerror.Wrap(err, "保存文件失败")
+		return nil, gerror.Wrap(err, "打开文件失败")
+	}
+	defer fileReader.Close()
+
+	// 获取文件MIME类型
+	contentType := service.GetContentType(file.Filename)
+
+	// 上传到OSS
+	err = service.OSS.UploadFile(ctx, objectKey, fileReader, contentType)
+	if err != nil {
+		return nil, gerror.Wrap(err, "上传文件到OSS失败")
 	}
 
-	// 构建访问URL（使用相对路径，前端会自动处理）
-	fileURL := fmt.Sprintf("/%s/%s", uploadDir, filename)
+	// 获取文件访问URL（OSS完整URL）
+	fileURL := service.OSS.GetFileURL(ctx, objectKey)
+	if fileURL == "" {
+		return nil, gerror.New("获取文件URL失败")
+	}
 
 	return &UploadRes{
 		URL:      fileURL,
@@ -157,22 +167,31 @@ func (c *ControllerV1) UploadImage(ctx context.Context, req *UploadImageReq) (re
 	
 	// 图片存储目录
 	uploadDir := "uploads/images"
-	uploadPath := filepath.Join("public", uploadDir)
-	if !gfile.Exists(uploadPath) {
-		if err := gfile.Mkdir(uploadPath); err != nil {
-			return nil, gerror.Wrap(err, "创建上传目录失败")
-		}
-	}
+	
+	// OSS对象键（文件路径）
+	objectKey := fmt.Sprintf("%s/%s", uploadDir, filename)
 
-	// 保存文件
-	savePath := filepath.Join(uploadPath, filename)
-	_, err = file.Save(savePath)
+	// 读取文件内容
+	fileReader, err := file.Open()
 	if err != nil {
-		return nil, gerror.Wrap(err, "保存文件失败")
+		return nil, gerror.Wrap(err, "打开文件失败")
+	}
+	defer fileReader.Close()
+
+	// 获取文件MIME类型
+	contentType := service.GetContentType(file.Filename)
+
+	// 上传到OSS
+	err = service.OSS.UploadFile(ctx, objectKey, fileReader, contentType)
+	if err != nil {
+		return nil, gerror.Wrap(err, "上传图片到OSS失败")
 	}
 
-	// 构建访问URL（使用相对路径，前端会自动处理）
-	fileURL := fmt.Sprintf("/%s/%s", uploadDir, filename)
+	// 获取文件访问URL（OSS完整URL）
+	fileURL := service.OSS.GetFileURL(ctx, objectKey)
+	if fileURL == "" {
+		return nil, gerror.New("获取图片URL失败")
+	}
 
 	return &UploadRes{
 		URL:      fileURL,

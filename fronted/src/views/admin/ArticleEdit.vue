@@ -302,16 +302,10 @@ const initEditor = () => {
           console.log('上传响应:', res)
           
           if (res && res.url) {
-                // 构建完整的图片URL
-                // 后端返回的 URL 如果是相对路径（如 /uploads/images/xxx.jpg），直接使用
-                // 如果是绝对路径，直接使用
+                // 后端返回的是OSS的完整URL（如 https://bucket.oss-cn-hangzhou.aliyuncs.com/uploads/images/xxx.jpg）
+                // 或者自定义CDN域名（如 https://cdn.example.com/uploads/images/xxx.jpg）
+                // 直接使用即可，无需额外处理
                 let imageUrl = res.url
-                // 如果后端返回的是相对路径，直接使用（浏览器会自动使用当前域名）
-                // 不需要手动添加域名，因为前后端在同一域名下
-                if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
-                  // 相对路径，直接使用（浏览器会自动使用当前域名）
-                  // 例如：/uploads/images/xxx.jpg 会被解析为 https://blog.renhj.cc/uploads/images/xxx.jpg
-                }
             
             // 调用 callback 函数，将图片URL传递给编辑器
             // callback 函数会将图片插入到编辑器中

@@ -15,3 +15,4 @@ type ArticleTag struct {
 	TagId     int         `json:"tagId"     orm:"tag_id"     ` // 标签ID
 	CreatedAt *gtime.Time `json:"createdAt" orm:"created_at" ` //
 }
+

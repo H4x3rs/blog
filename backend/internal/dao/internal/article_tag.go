@@ -83,3 +83,4 @@ func (dao *ArticleTagDao) Ctx(ctx context.Context) *gdb.Model {
 func (dao *ArticleTagDao) Transaction(ctx context.Context, f func(ctx context.Context, tx gdb.TX) error) (err error) {
 	return dao.Ctx(ctx).Transaction(ctx, f)
 }
+

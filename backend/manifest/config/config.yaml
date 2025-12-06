@@ -49,3 +49,14 @@ qwen:
   apiEndpoint: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
   model: "qwen3-max" # 模型名称，可选: qwen-turbo, qwen-plus, qwen-max等
 
+# 阿里云OSS配置
+# 优先从环境变量读取，如果没有则使用默认值
+# 实际值通过代码中的 utils.GetConfigString 读取环境变量
+oss:
+  endpoint: "oss-cn-hangzhou.aliyuncs.com" # OSS端点，例如: oss-cn-hangzhou.aliyuncs.com
+  accessKeyId: "" # OSS AccessKey ID，从环境变量OSS_ACCESS_KEY_ID读取
+  accessKeySecret: "" # OSS AccessKey Secret，从环境变量OSS_ACCESS_KEY_SECRET读取
+  bucketName: "" # OSS Bucket名称，从环境变量OSS_BUCKET_NAME读取
+  domain: "" # 自定义域名（CDN域名），可选，从环境变量OSS_DOMAIN读取
+  # 如果配置了自定义域名，文件URL将使用自定义域名，否则使用OSS默认域名
+

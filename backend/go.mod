@@ -5,6 +5,7 @@ go 1.23.0
 toolchain go1.23.3
 
 require (
+	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/gogf/gf/contrib/drivers/mysql/v2 v2.9.5
 	github.com/gogf/gf/v2 v2.9.5
 )

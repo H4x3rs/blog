@@ -22,6 +22,25 @@ server {
     root /opt/blog/fronted/dist;
     index index.html;
 
+    # SEO文件：sitemap.xml 和 robots.txt
+    # 这些文件需要直接通过根路径访问，不经过 /api 前缀
+    # 搜索引擎会直接访问 https://blog.renhj.cc/sitemap.xml 和 https://blog.renhj.cc/robots.txt
+    location = /sitemap.xml {
+        proxy_pass http://127.0.0.1:8000/sitemap.xml;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location = /robots.txt {
+        proxy_pass http://127.0.0.1:8000/robots.txt;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
     # API 请求代理到后端（必须在其他 location 之前，避免被其他规则匹配）
     # 前端请求: /api/article/getList
     # Nginx 转发到: http://127.0.0.1:8000/article/getList (去掉 /api 前缀)
@@ -37,13 +56,14 @@ server {
     }
 
     # 静态资源（上传的文件）
-    # 后端返回的 URL 格式: /uploads/images/xxx.jpg
-    # 直接由 Nginx 提供静态文件服务
-    location /uploads {
-        alias /opt/blog/backend/public/uploads;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
+    # 注意：如果使用阿里云OSS存储，后端返回的URL是OSS的完整URL（如 https://bucket.oss-cn-hangzhou.aliyuncs.com/...）
+    # 这种情况下不需要配置 /uploads location，文件会直接从OSS访问
+    # 如果后端返回的是相对路径（如 /uploads/images/xxx.jpg），则需要取消下面的注释
+    # location /uploads {
+    #     alias /opt/blog/backend/public/uploads;
+    #     expires 30d;
+    #     add_header Cache-Control "public, immutable";
+    # }
 
     # 前端静态资源文件（assets 目录下的 JS、CSS 等）
     # 这些文件需要直接返回，不走 Vue Router

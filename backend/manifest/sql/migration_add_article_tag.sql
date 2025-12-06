@@ -16,3 +16,4 @@ CREATE TABLE IF NOT EXISTS `article_tag` (
   KEY `idx_tag_id` (`tag_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文章标签关联表';
 
+

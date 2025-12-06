@@ -31,3 +31,4 @@ SELECT @editor_role_id, id FROM permission
 WHERE code IN ('chat:view', 'chat:message:send', 'chat:session:clear')
 ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
 
+

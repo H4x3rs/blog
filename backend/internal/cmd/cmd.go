@@ -22,6 +22,7 @@ import (
 	"blog/internal/controller/upload"
 	"blog/internal/controller/user"
 	"blog/internal/middleware"
+	"blog/internal/service"
 )
 
 var (
@@ -32,7 +33,15 @@ var (
 		Func: func(ctx context.Context, parser *gcmd.Parser) (err error) {
 			s := g.Server()
 
+			// 初始化OSS服务（如果配置了OSS）
+			if err := service.OSS.InitOSS(ctx); err != nil {
+				g.Log().Warning(ctx, "OSS初始化失败（如果使用OSS存储，请检查配置）:", err)
+			} else {
+				g.Log().Info(ctx, "OSS服务初始化成功")
+			}
+
 			// 配置静态文件服务（用于访问上传的文件）
+			// 注意：如果使用OSS存储，这部分代码可以保留作为备用，或者删除
 			// 使用绝对路径，相对于 backend 目录
 			publicPath := "public"
 			if !gfile.Exists(publicPath) {
