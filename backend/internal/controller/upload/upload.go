@@ -3,8 +3,6 @@ package upload
 import (
 	"context"
 	"fmt"
-	"io"
-	"path/filepath"
 	"strings"
 
 	"blog/internal/service"
@@ -38,7 +36,7 @@ type UploadRes struct {
 // UploadFile 处理文件上传
 func (c *ControllerV1) UploadFile(ctx context.Context, req *UploadFileReq) (res *UploadRes, err error) {
 	r := g.RequestFromCtx(ctx)
-	
+
 	// 检查用户是否登录
 	userID := r.GetCtxVar("user_id", 0).Int()
 	if userID == 0 {
@@ -59,7 +57,7 @@ func (c *ControllerV1) UploadFile(ctx context.Context, req *UploadFileReq) (res 
 
 	// 获取文件扩展名
 	ext := gfile.Ext(file.Filename)
-	
+
 	// 允许的文件类型
 	allowedExts := []string{".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".zip", ".rar"}
 	allowed := false
@@ -80,7 +78,7 @@ func (c *ControllerV1) UploadFile(ctx context.Context, req *UploadFileReq) (res 
 	safeFilename := strings.ReplaceAll(file.Filename, " ", "_")
 	safeFilename = strings.ReplaceAll(safeFilename, "..", "")
 	filename := fmt.Sprintf("%s_%s_%s", timestamp, randomStr, safeFilename)
-	
+
 	// 根据文件类型确定存储目录
 	var uploadDir string
 	if isImage(ext) {
@@ -124,7 +122,7 @@ func (c *ControllerV1) UploadFile(ctx context.Context, req *UploadFileReq) (res 
 // UploadImage 处理图片上传（专门用于编辑器）
 func (c *ControllerV1) UploadImage(ctx context.Context, req *UploadImageReq) (res *UploadRes, err error) {
 	r := g.RequestFromCtx(ctx)
-	
+
 	// 检查用户是否登录
 	userID := r.GetCtxVar("user_id", 0).Int()
 	if userID == 0 {
@@ -164,10 +162,10 @@ func (c *ControllerV1) UploadImage(ctx context.Context, req *UploadImageReq) (re
 	safeFilename := strings.ReplaceAll(file.Filename, " ", "_")
 	safeFilename = strings.ReplaceAll(safeFilename, "..", "")
 	filename := fmt.Sprintf("%s_%s_%s", timestamp, randomStr, safeFilename)
-	
+
 	// 图片存储目录
 	uploadDir := "uploads/images"
-	
+
 	// OSS对象键（文件路径）
 	objectKey := fmt.Sprintf("%s/%s", uploadDir, filename)
 
@@ -210,4 +208,3 @@ func isImage(ext string) bool {
 	}
 	return false
 }
-
