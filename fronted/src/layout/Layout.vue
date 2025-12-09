@@ -286,10 +286,8 @@ const handleLogout = async () => {
     
     ElMessage.success('已退出登录')
     
-    // 如果在admin页面，跳转到首页
-    if (route.path.startsWith('/admin')) {
-      router.push('/')
-    }
+    // 跳转到首页
+    router.push('/')
   } catch {
     // 用户取消
   }

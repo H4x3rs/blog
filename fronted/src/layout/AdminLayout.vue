@@ -309,8 +309,8 @@ const handleLogout = async () => {
     
     ElMessage.success('已退出登录')
     
-    // 跳转到登录页面
-    router.push('/login-new')
+    // 跳转到首页
+    router.push('/')
   } catch {
     // 用户取消
   }

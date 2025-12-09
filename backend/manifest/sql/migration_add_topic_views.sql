@@ -12,3 +12,4 @@ ADD COLUMN IF NOT EXISTS `views` int(11) DEFAULT 0 COMMENT '阅读数' AFTER `so
 -- ALTER TABLE `topic` ADD COLUMN `views` int(11) DEFAULT 0 COMMENT '阅读数' AFTER `sort_order`;
 
 
+

@@ -10,6 +10,7 @@ import (
 
 	"github.com/gogf/gf/v2/database/gdb"
 	"github.com/gogf/gf/v2/frame/g"
+	"github.com/gogf/gf/v2/os/gtime"
 )
 
 type sArticle struct{}
@@ -54,6 +55,10 @@ func (s *sArticle) GetOne(ctx context.Context, id int, userId int) (out *entity.
 			// 更新返回的文章对象的阅读量
 			tempArticle.Views++
 		}
+
+		// 更新访问日志表（记录每日访问量）
+		s.updateVisitLog(ctx)
+
 		return tempArticle, nil
 	}
 
@@ -263,4 +268,39 @@ func (s *sArticle) GetArticleTags(ctx context.Context, articleId int) (tags []*e
 
 	err = dao.Tag.Ctx(ctx).WhereIn(dao.Tag.Columns().Id, tagIds).Scan(&tags)
 	return
+}
+
+// updateVisitLog 更新访问日志表（记录每日访问量）
+func (s *sArticle) updateVisitLog(ctx context.Context) {
+	today := gtime.Now().Format("Y-m-d")
+	todayTime := gtime.New(today + " 00:00:00")
+
+	// 先查询今天是否已有记录
+	var visitLog *entity.VisitLog
+	err := dao.VisitLog.Ctx(ctx).
+		Where(dao.VisitLog.Columns().Date, todayTime).
+		Scan(&visitLog)
+
+	if err == nil && visitLog != nil {
+		// 如果存在，更新访问量（使用原子操作）
+		_, err = dao.VisitLog.Ctx(ctx).
+			Where(dao.VisitLog.Columns().Date, todayTime).
+			Data(gdb.Map{
+				dao.VisitLog.Columns().Views: gdb.Raw("`views` + 1"),
+			}).
+			Update()
+	} else {
+		// 如果不存在，插入新记录
+		_, err = dao.VisitLog.Ctx(ctx).
+			Data(do.VisitLog{
+				Date:  todayTime,
+				Views: 1,
+			}).
+			Insert()
+	}
+
+	if err != nil {
+		// 如果更新失败，记录错误但不影响主流程
+		g.Log().Errorf(ctx, "更新访问日志失败: %v", err)
+	}
 }

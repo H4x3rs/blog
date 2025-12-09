@@ -345,7 +345,7 @@ onMounted(() => {
 /* 分页样式 */
 .pagination-container {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   margin-top: 20px;
   padding: 20px 0;
 }

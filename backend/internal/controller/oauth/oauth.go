@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 
+	"blog/internal/dao"
+	"blog/internal/model/entity"
 	"blog/internal/service"
 
 	"github.com/gogf/gf/v2/frame/g"
@@ -43,10 +45,31 @@ type OAuthCallbackReq struct {
 
 // OAuth 回调 - 处理第三方登录回调，返回JSON（包含JWT token）
 func (c *ControllerV1) Callback(ctx context.Context, req *OAuthCallbackReq) (res *OAuthCallbackRes, err error) {
+	// 获取请求信息
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
+
 	userInfo, err := service.OAuth.HandleCallback(ctx, req.Provider, req.Code, req.State)
 	if err != nil {
+		// 记录OAuth登录失败日志
+		service.OperationLog.LogOperation(ctx, 0, "", "login", "oauth", fmt.Sprintf("%s OAuth登录失败", req.Provider), "GET", fmt.Sprintf("/oauth/%s/callback", req.Provider), ipAddress, userAgent, 0, req, err.Error())
 		return nil, err
 	}
+
+	// 获取用户ID（通过用户名查询）
+	userId := 0
+	if userInfo != nil && userInfo.Username != "" {
+		var user *entity.User
+		err := dao.User.Ctx(ctx).Where(dao.User.Columns().Username, userInfo.Username).Scan(&user)
+		if err == nil && user != nil {
+			userId = user.Id
+		}
+	}
+
+	// 记录OAuth登录成功日志
+	service.OperationLog.LogOperation(ctx, userId, userInfo.Username, "login", "oauth", fmt.Sprintf("%s OAuth登录成功", req.Provider), "GET", fmt.Sprintf("/oauth/%s/callback", req.Provider), ipAddress, userAgent, 1, map[string]interface{}{"provider": req.Provider}, "")
+
 	return &OAuthCallbackRes{
 		Token:    userInfo.Token,
 		Username: userInfo.Username,

@@ -71,6 +71,12 @@ type DeleteReq struct {
 type DeleteRes struct{}
 
 func (c *ControllerV1) Create(ctx context.Context, req *CreateReq) (res *CreateRes, err error) {
+	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
+	username := g.RequestFromCtx(ctx).GetCtxVar("username", "").String()
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
+
 	id, err := service.Category.Create(ctx, &entity.Category{
 		Name:        req.Name,
 		Slug:        req.Slug,
@@ -78,12 +84,21 @@ func (c *ControllerV1) Create(ctx context.Context, req *CreateReq) (res *CreateR
 		Description: req.Description,
 	})
 	if err != nil {
+		service.OperationLog.LogOperation(ctx, userID, username, "create", "category", "创建分类失败", "POST", "/category/create", ipAddress, userAgent, 0, req, err.Error())
 		return nil, err
 	}
+
+	service.OperationLog.LogOperation(ctx, userID, username, "create", "category", "创建分类成功", "POST", "/category/create", ipAddress, userAgent, 1, map[string]interface{}{"id": id, "name": req.Name}, "")
 	return &CreateRes{ID: id}, nil
 }
 
 func (c *ControllerV1) Update(ctx context.Context, req *UpdateReq) (res *UpdateRes, err error) {
+	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
+	username := g.RequestFromCtx(ctx).GetCtxVar("username", "").String()
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
+
 	err = service.Category.Update(ctx, &entity.Category{
 		Id:          req.ID,
 		Name:        req.Name,
@@ -91,6 +106,12 @@ func (c *ControllerV1) Update(ctx context.Context, req *UpdateReq) (res *UpdateR
 		Icon:        req.Icon,
 		Description: req.Description,
 	})
+	if err != nil {
+		service.OperationLog.LogOperation(ctx, userID, username, "update", "category", "更新分类失败", "POST", "/category/update", ipAddress, userAgent, 0, req, err.Error())
+		return nil, err
+	}
+
+	service.OperationLog.LogOperation(ctx, userID, username, "update", "category", "更新分类成功", "POST", "/category/update", ipAddress, userAgent, 1, map[string]interface{}{"id": req.ID, "name": req.Name}, "")
 	return
 }
 
@@ -119,6 +140,18 @@ func (c *ControllerV1) GetBySlug(ctx context.Context, req *GetBySlugReq) (res *G
 }
 
 func (c *ControllerV1) Delete(ctx context.Context, req *DeleteReq) (res *DeleteRes, err error) {
+	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
+	username := g.RequestFromCtx(ctx).GetCtxVar("username", "").String()
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
+
 	err = service.Category.Delete(ctx, req.ID)
+	if err != nil {
+		service.OperationLog.LogOperation(ctx, userID, username, "delete", "category", "删除分类失败", "POST", "/category/delete", ipAddress, userAgent, 0, req, err.Error())
+		return nil, err
+	}
+
+	service.OperationLog.LogOperation(ctx, userID, username, "delete", "category", "删除分类成功", "POST", "/category/delete", ipAddress, userAgent, 1, map[string]interface{}{"id": req.ID}, "")
 	return
 }

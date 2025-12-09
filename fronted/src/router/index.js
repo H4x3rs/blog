@@ -150,6 +150,12 @@ const routes = [
         meta: { title: '专题管理' }
       },
       {
+        path: 'comments',
+        name: 'CommentManage',
+        component: () => import('../views/admin/CommentManage.vue'),
+        meta: { title: '评论管理' }
+      },
+      {
         path: 'users',
         name: 'UserManage',
         component: () => import('../views/admin/UserManage.vue'),
@@ -190,6 +196,12 @@ const routes = [
         name: 'Chat',
         component: () => import('../views/admin/Chat.vue'),
         meta: { title: 'AI 对话' }
+      },
+      {
+        path: 'operation-logs',
+        name: 'OperationLogManage',
+        component: () => import('../views/admin/OperationLogManage.vue'),
+        meta: { title: '操作日志' }
       }
     ]
   }

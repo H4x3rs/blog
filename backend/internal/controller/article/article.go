@@ -85,6 +85,10 @@ type DeleteRes struct{}
 func (c *ControllerV1) Create(ctx context.Context, req *CreateReq) (res *CreateRes, err error) {
 	// 从请求上下文中获取用户ID（通过中间件设置）
 	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
+	username := g.RequestFromCtx(ctx).GetCtxVar("username", "").String()
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
 
 	article := &entity.Article{
 		Title:      req.Title,
@@ -104,6 +108,8 @@ func (c *ControllerV1) Create(ctx context.Context, req *CreateReq) (res *CreateR
 
 	id, err := service.Article.Create(ctx, article)
 	if err != nil {
+		// 记录创建失败日志
+		service.OperationLog.LogOperation(ctx, userID, username, "create", "article", "创建文章失败", "POST", "/article/create", ipAddress, userAgent, 0, req, err.Error())
 		return nil, err
 	}
 
@@ -115,6 +121,9 @@ func (c *ControllerV1) Create(ctx context.Context, req *CreateReq) (res *CreateR
 			g.Log().Errorf(ctx, "设置文章标签失败: %v", err)
 		}
 	}
+
+	// 记录创建成功日志
+	service.OperationLog.LogOperation(ctx, userID, username, "create", "article", "创建文章成功", "POST", "/article/create", ipAddress, userAgent, 1, map[string]interface{}{"id": id, "title": req.Title}, "")
 
 	return &CreateRes{ID: id}, nil
 }
@@ -199,6 +208,10 @@ func (c *ControllerV1) GetList(ctx context.Context, req *GetListReq) (res *GetLi
 func (c *ControllerV1) Update(ctx context.Context, req *UpdateReq) (res *UpdateRes, err error) {
 	// 从请求上下文中获取用户ID（通过中间件设置）
 	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
+	username := g.RequestFromCtx(ctx).GetCtxVar("username", "").String()
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
 
 	// 获取原有文章信息，判断状态是否改变
 	oldArticle, err := service.Article.GetOne(ctx, req.ID, userID)
@@ -228,6 +241,8 @@ func (c *ControllerV1) Update(ctx context.Context, req *UpdateReq) (res *UpdateR
 
 	err = service.Article.Update(ctx, req.ID, article, userID)
 	if err != nil {
+		// 记录更新失败日志
+		service.OperationLog.LogOperation(ctx, userID, username, "update", "article", "更新文章失败", "POST", "/article/update", ipAddress, userAgent, 0, req, err.Error())
 		return nil, err
 	}
 
@@ -242,13 +257,29 @@ func (c *ControllerV1) Update(ctx context.Context, req *UpdateReq) (res *UpdateR
 		g.Log().Errorf(ctx, "更新文章标签失败: %v", err)
 	}
 
+	// 记录更新成功日志
+	service.OperationLog.LogOperation(ctx, userID, username, "update", "article", "更新文章成功", "POST", "/article/update", ipAddress, userAgent, 1, map[string]interface{}{"id": req.ID, "title": req.Title}, "")
+
 	return
 }
 
 func (c *ControllerV1) Delete(ctx context.Context, req *DeleteReq) (res *DeleteRes, err error) {
 	// 从请求上下文中获取用户ID（通过中间件设置）
 	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
+	username := g.RequestFromCtx(ctx).GetCtxVar("username", "").String()
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
 
 	err = service.Article.Delete(ctx, req.ID, userID)
+	if err != nil {
+		// 记录删除失败日志
+		service.OperationLog.LogOperation(ctx, userID, username, "delete", "article", "删除文章失败", "POST", "/article/delete", ipAddress, userAgent, 0, req, err.Error())
+		return nil, err
+	}
+
+	// 记录删除成功日志
+	service.OperationLog.LogOperation(ctx, userID, username, "delete", "article", "删除文章成功", "POST", "/article/delete", ipAddress, userAgent, 1, map[string]interface{}{"id": req.ID}, "")
+
 	return
 }

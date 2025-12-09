@@ -159,3 +159,4 @@ g.Log().Infof(ctx, "完整响应内容: %s", dataStr)
 如果看到这些日志，说明 function calling 正常工作。
 
 
+

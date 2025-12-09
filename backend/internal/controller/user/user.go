@@ -93,16 +93,28 @@ type DeleteReq struct {
 type DeleteRes struct{}
 
 func (c *ControllerV1) Login(ctx context.Context, req *LoginReq) (res *LoginRes, err error) {
+	// 获取请求信息
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
+
 	user, err := service.User.Login(ctx, req.Username, req.Password)
 	if err != nil {
+		// 记录登录失败日志
+		service.OperationLog.LogOperation(ctx, 0, req.Username, "login", "user", "用户登录失败", "POST", "/user/login", ipAddress, userAgent, 0, req, err.Error())
 		return nil, err
 	}
 
 	// 生成JWT token
 	token, err := utils.GenerateToken(user.Id, user.Username)
 	if err != nil {
+		// 记录token生成失败日志
+		service.OperationLog.LogOperation(ctx, user.Id, user.Username, "login", "user", "用户登录成功但token生成失败", "POST", "/user/login", ipAddress, userAgent, 0, req, err.Error())
 		return nil, err
 	}
+
+	// 记录登录成功日志
+	service.OperationLog.LogOperation(ctx, user.Id, user.Username, "login", "user", "用户登录成功", "POST", "/user/login", ipAddress, userAgent, 1, map[string]interface{}{"username": req.Username}, "")
 
 	return &LoginRes{
 		Token:    token,
@@ -129,6 +141,12 @@ func (c *ControllerV1) GetOne(ctx context.Context, req *GetOneReq) (res *GetOneR
 }
 
 func (c *ControllerV1) Create(ctx context.Context, req *CreateReq) (res *CreateRes, err error) {
+	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
+	username := g.RequestFromCtx(ctx).GetCtxVar("username", "").String()
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
+
 	id, err := service.User.Create(ctx, &entity.User{
 		Username: req.Username,
 		Password: req.Password,
@@ -138,6 +156,7 @@ func (c *ControllerV1) Create(ctx context.Context, req *CreateReq) (res *CreateR
 		Status:   1,
 	})
 	if err != nil {
+		service.OperationLog.LogOperation(ctx, userID, username, "create", "user", "创建用户失败", "POST", "/user/create", ipAddress, userAgent, 0, req, err.Error())
 		return nil, err
 	}
 
@@ -148,10 +167,18 @@ func (c *ControllerV1) Create(ctx context.Context, req *CreateReq) (res *CreateR
 		glog.Error(ctx, "分配默认角色失败:", err)
 	}
 
+	service.OperationLog.LogOperation(ctx, userID, username, "create", "user", "创建用户成功", "POST", "/user/create", ipAddress, userAgent, 1, map[string]interface{}{"id": id, "username": req.Username}, "")
+
 	return &CreateRes{ID: id}, nil
 }
 
 func (c *ControllerV1) Update(ctx context.Context, req *UpdateReq) (res *UpdateRes, err error) {
+	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
+	username := g.RequestFromCtx(ctx).GetCtxVar("username", "").String()
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
+
 	err = service.User.Update(ctx, &entity.User{
 		Id:       req.ID,
 		Username: req.Username,
@@ -161,11 +188,29 @@ func (c *ControllerV1) Update(ctx context.Context, req *UpdateReq) (res *UpdateR
 		Avatar:   req.Avatar,
 		Status:   req.Status,
 	})
+	if err != nil {
+		service.OperationLog.LogOperation(ctx, userID, username, "update", "user", "更新用户失败", "POST", "/user/update", ipAddress, userAgent, 0, req, err.Error())
+		return nil, err
+	}
+
+	service.OperationLog.LogOperation(ctx, userID, username, "update", "user", "更新用户成功", "POST", "/user/update", ipAddress, userAgent, 1, map[string]interface{}{"id": req.ID}, "")
 	return
 }
 
 func (c *ControllerV1) Delete(ctx context.Context, req *DeleteReq) (res *DeleteRes, err error) {
+	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
+	username := g.RequestFromCtx(ctx).GetCtxVar("username", "").String()
+	r := g.RequestFromCtx(ctx)
+	ipAddress := r.GetClientIp()
+	userAgent := r.Header.Get("User-Agent")
+
 	err = service.User.Delete(ctx, req.ID)
+	if err != nil {
+		service.OperationLog.LogOperation(ctx, userID, username, "delete", "user", "删除用户失败", "POST", "/user/delete", ipAddress, userAgent, 0, req, err.Error())
+		return nil, err
+	}
+
+	service.OperationLog.LogOperation(ctx, userID, username, "delete", "user", "删除用户成功", "POST", "/user/delete", ipAddress, userAgent, 1, map[string]interface{}{"id": req.ID}, "")
 	return
 }
 

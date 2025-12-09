@@ -1690,7 +1690,7 @@ onMounted(() => {
 }
 
 .topic-content {
-  padding: 12px;
+  padding: 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -1741,40 +1741,32 @@ onMounted(() => {
 }
 
 .topic-footer {
-  padding-top: 10px;
-  margin-top: auto;
-  border-top: 1px solid #f0f2f5;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  min-height: 36px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f2f5;
+  font-size: 13px;
+  color: #909399;
+  margin-top: auto;
 }
 
 .date {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 12px;
-  color: #606266;
-  padding: 5px 10px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  font-size: 13px;
+  color: #909399;
 }
 
 .date-icon {
   font-size: 13px;
   color: #909399;
-  opacity: 0.85;
-  line-height: 1;
 }
 
 .date-text {
-  line-height: 1.3;
-  font-weight: 500;
-  letter-spacing: 0.2px;
+  color: #909399;
+  font-size: 13px;
 }
 
 .sort-badge {
@@ -1787,34 +1779,21 @@ onMounted(() => {
 }
 
 .article-count-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  background: linear-gradient(135deg, rgba(64, 158, 255, 0.12) 0%, rgba(64, 158, 255, 0.08) 100%);
-  border: 1px solid rgba(64, 158, 255, 0.2);
-  border-radius: 8px;
-  white-space: nowrap;
-  flex-shrink: 0;
-  cursor: default;
-  line-height: 1.2;
+  gap: 4px;
+  font-size: 13px;
+  color: #909399;
 }
 
 .article-count-badge .count-icon {
-  font-size: 14px;
-  color: #409eff;
-  line-height: 1;
-  opacity: 0.95;
+  font-size: 13px;
+  color: #909399;
 }
 
 .article-count-badge .count-text {
-  font-size: 12px;
-  font-weight: 600;
-  color: #409eff;
-  line-height: 1.3;
-  white-space: nowrap;
-  letter-spacing: 0.3px;
-  text-shadow: 0 1px 2px rgba(64, 158, 255, 0.1);
+  color: #909399;
+  font-size: 13px;
 }
 
 .pagination-container {
@@ -2572,11 +2551,14 @@ onMounted(() => {
   background: #f8f9fa;
   border-radius: 12px;
   transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
 .preview-articles-card .article-item:hover {
-  background: #e9ecef;
-  transform: translateX(4px);
+  background: #fff;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  border-color: #e4e7ed;
 }
 
 .preview-articles-card .article-number {
@@ -2628,7 +2610,7 @@ onMounted(() => {
 .preview-articles-card .article-meta {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 12px;
   font-size: 13px;
   color: #909399;
 }
@@ -2771,30 +2753,29 @@ onMounted(() => {
   }
   
   .date {
-    padding: 3px 6px;
-    font-size: 11px;
     gap: 4px;
+    font-size: 12px;
   }
   
   .date-icon {
-    font-size: 11px;
+    font-size: 12px;
   }
   
   .date-text {
-    font-size: 11px;
+    font-size: 12px;
   }
   
   .article-count-badge {
-    padding: 3px 8px;
     gap: 4px;
+    font-size: 12px;
   }
   
   .article-count-badge .count-icon {
-    font-size: 11px;
+    font-size: 12px;
   }
   
   .article-count-badge .count-text {
-    font-size: 11px;
+    font-size: 12px;
   }
   
   .topic-desc {
