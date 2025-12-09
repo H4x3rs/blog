@@ -37,8 +37,10 @@ type GetOneReq struct {
 }
 type GetOneRes struct {
 	*entity.Article
-	PublishedByUser *entity.User  `json:"publishedByUser,omitempty"`
-	Tags            []*entity.Tag `json:"tags,omitempty"` // 标签列表
+	PublishedByUser *entity.User     `json:"publishedByUser,omitempty"`
+	CategoryName    string           `json:"categoryName,omitempty"`
+	Category        *entity.Category `json:"category,omitempty"`
+	Tags            []*entity.Tag    `json:"tags,omitempty"` // 标签列表
 }
 
 type GetListReq struct {
@@ -151,6 +153,15 @@ func (c *ControllerV1) GetOne(ctx context.Context, req *GetOneReq) (res *GetOneR
 			// 不返回密码
 			user.Password = ""
 			res.PublishedByUser = user
+		}
+	}
+
+	// 如果有关联分类，获取分类信息
+	if article.CategoryId > 0 {
+		category, err := service.Category.GetOne(ctx, article.CategoryId)
+		if err == nil && category != nil {
+			res.CategoryName = category.Name
+			res.Category = category
 		}
 	}
 

@@ -4,15 +4,15 @@
     <div class="article-header">
       <div class="header-content">
         <div class="meta-info">
-          <el-tag effect="dark" round class="category-tag">{{ article.category }}</el-tag>
           <el-tag 
-            v-if="article.topic" 
+            v-if="article.category" 
             effect="dark" 
             round 
-            class="topic-tag"
-            @click="goToTopic"
+            class="category-tag"
+            @click="goToCategory"
+            style="cursor: pointer;"
           >
-            📚 {{ article.topic.name }}
+            {{ article.category }}
           </el-tag>
           <span class="date">{{ article.createdAt }}</span>
         </div>
@@ -320,6 +320,7 @@ const loadArticle = async () => {
         id: res.id,
         title: res.title || '',
         category: res.categoryName || '',
+        categoryObj: res.category || null,
         createdAt: formatDate(res.createdAt),
         views: res.views || 0,
         cover: res.coverImage || 'https://picsum.photos/id/' + res.id + '/1200/600',
@@ -540,6 +541,13 @@ const goToTopic = () => {
   }
 }
 
+// 跳转到分类详情页
+const goToCategory = () => {
+  if (article.value.categoryObj && article.value.categoryObj.slug) {
+    router.push(`/category/${article.value.categoryObj.slug}`)
+  }
+}
+
 const renderedContent = computed(() => {
   if (!article.value.content) return ''
   let html = marked.parse(article.value.content)
@@ -594,19 +602,76 @@ const renderedContent = computed(() => {
 }
 
 .meta-info {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
+  gap: 10px;
+  flex-wrap: wrap;
+  position: relative;
 }
 
 .category-tag {
-  background-color: #409eff;
-  border-color: #409eff;
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  padding: 6px 12px !important;
+  margin: 0 !important;
+  height: auto !important;
+  line-height: normal !important;
+  min-height: auto !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border-radius: 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  transition: all 0.3s ease;
+  display: inline-block;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.category-tag:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.topic-tag {
+  background-color: #67c23a;
+  border-color: #67c23a;
   font-weight: 600;
   letter-spacing: 0.5px;
 }
+
+.tag-meta {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: white;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.tag-meta:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.date {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 6px 12px;
+  margin: 0;
+  height: auto;
+  line-height: normal;
+  border-radius: 20px;
+  border: none;
+  transition: all 0.3s ease;
+  display: inline-block;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
 
 .title {
   font-size: 36px;
