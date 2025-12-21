@@ -36,3 +36,4 @@ func (c *ControllerV1) GetList(ctx context.Context, req *GetListReq) (res *GetLi
 	return &GetListRes{List: list, Total: total}, nil
 }
 
+

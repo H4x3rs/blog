@@ -33,3 +33,4 @@ SELECT @editor_role_id, id FROM permission
 WHERE code IN ('content:comment:manage', 'content:comment:list', 'content:comment:approve', 'content:comment:update', 'content:comment:delete')
 ON DUPLICATE KEY UPDATE `role_id`=VALUES(`role_id`);
 
+

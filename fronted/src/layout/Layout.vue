@@ -151,8 +151,19 @@
       <div class="footer-bottom">
         <div class="copyright">
            &copy; 2024 {{ siteName || 'Blog System' }}. All rights reserved. 
-           <span v-if="icpNumber" class="divider">|</span> 
+           <span v-if="icpNumber || publicSecurityBeian" class="divider">|</span> 
            <a v-if="icpNumber" :href="`https://beian.miit.gov.cn/`" target="_blank" rel="noopener noreferrer">{{ icpNumber }}</a>
+           <span v-if="icpNumber && publicSecurityBeian" class="divider">|</span>
+           <a 
+             v-if="publicSecurityBeian"
+             :href="`http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=${publicSecurityBeianCode}`" 
+             target="_blank" 
+             rel="noopener noreferrer"
+             class="beian-link"
+           >
+             <img src="https://www.beian.gov.cn/img/ghs.png" alt="公安备案图标" class="beian-icon" />
+             {{ publicSecurityBeian }}
+           </a>
         </div>
         <div class="powered-by">
            Powered by GoFrame & Vue 3
@@ -175,6 +186,11 @@ const router = useRouter()
 const route = useRoute()
 const mobileMenuVisible = ref(false)
 const { siteName, icpNumber } = useSiteConfig()
+
+// 公安网备信息 - 可以从配置中获取，这里先使用示例值
+// 格式示例：京公网安备 11010802012345号
+const publicSecurityBeian = ref('京公网安备11011102002752号') // 请根据实际情况修改
+const publicSecurityBeianCode = ref('11011102002752') // 备案号中的数字部分，用于链接
 
 // 调试日志
 watch(icpNumber, (newVal) => {
@@ -613,6 +629,27 @@ watch(() => route.path, () => {
 
 .divider {
   margin: 0 10px;
+}
+
+/* 公安网备信息样式 */
+.beian-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #a0a0a0;
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.beian-link:hover {
+  color: white;
+}
+
+.beian-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
 }
 
 /* 响应式辅助 */

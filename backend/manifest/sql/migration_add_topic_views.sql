@@ -13,3 +13,4 @@ ADD COLUMN IF NOT EXISTS `views` int(11) DEFAULT 0 COMMENT '阅读数' AFTER `so
 
 
 
+

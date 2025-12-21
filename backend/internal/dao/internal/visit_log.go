@@ -86,3 +86,4 @@ func (dao *VisitLogDao) Transaction(ctx context.Context, f func(ctx context.Cont
 	return dao.Ctx(ctx).Transaction(ctx, f)
 }
 
+

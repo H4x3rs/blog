@@ -19,3 +19,4 @@ type VisitLog struct {
 	UpdatedAt *gtime.Time //
 }
 
+

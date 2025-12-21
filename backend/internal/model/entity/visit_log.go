@@ -17,3 +17,4 @@ type VisitLog struct {
 	UpdatedAt *gtime.Time `json:"updatedAt"  orm:"updated_at"  ` //
 }
 
+
