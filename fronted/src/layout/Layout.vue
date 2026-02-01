@@ -168,8 +168,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { Menu, Message, Location, User, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useSiteConfig } from '../store/site'
