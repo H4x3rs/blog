@@ -4,7 +4,7 @@
       <div class="header-inner">
         <div class="logo" @click="$router.push('/')">
           <span class="logo-icon">B</span>
-          <span class="logo-text">Blog System</span>
+          <span class="logo-text">{{ siteName || 'Blog System' }}</span>
         </div>
         
         <!-- Desktop Nav -->
@@ -107,7 +107,7 @@
           <el-col :span="8" :xs="24" class="footer-col">
             <div class="footer-logo">
               <span class="logo-icon small">B</span>
-              <span class="logo-text-light">Blog System</span>
+              <span class="logo-text-light">{{ siteName || 'Blog System' }}</span>
             </div>
             <p class="footer-desc">
               探索技术之美，记录成长足迹。
@@ -144,9 +144,20 @@
       
       <div class="footer-bottom">
         <div class="copyright">
-           &copy; 2024 Blog System. All rights reserved. 
-           <span class="divider">|</span> 
-           <a href="#">京ICP备88888888号</a>
+           &copy; 2024 {{ siteName || 'Blog System' }}. All rights reserved.
+           <span v-if="icpNumber || publicSecurityBeian" class="divider">|</span>
+           <a v-if="icpNumber" :href="`https://beian.miit.gov.cn/`" target="_blank" rel="noopener noreferrer">{{ icpNumber }}</a>
+           <span v-if="icpNumber && publicSecurityBeian" class="divider">|</span>
+           <a
+             v-if="publicSecurityBeian"
+             :href="`http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=${publicSecurityBeianCode}`"
+             target="_blank"
+             rel="noopener noreferrer"
+             class="beian-link"
+           >
+             <img src="https://www.beian.gov.cn/img/ghs.png" alt="公安备案图标" class="beian-icon" />
+             {{ publicSecurityBeian }}
+           </a>
         </div>
         <div class="powered-by">
            Powered by GoFrame & Vue 3
@@ -161,10 +172,24 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Menu, Message, Location, User, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useSiteConfig } from '../store/site'
+import { getCurrentUser } from '../api/user'
 import 'element-plus/theme-chalk/display.css' // Helper classes for responsive
 
 const router = useRouter()
+const route = useRoute()
 const mobileMenuVisible = ref(false)
+const { siteName, icpNumber } = useSiteConfig()
+
+// 公安网备信息 - 可以从配置中获取，这里先使用示例值
+// 格式示例：京公网安备 11010802012345号
+const publicSecurityBeian = ref('京公网安备11011102002752号') // 请根据实际情况修改
+const publicSecurityBeianCode = ref('11011102002752') // 备案号中的数字部分，用于链接
+
+// 调试日志
+watch(icpNumber, (newVal) => {
+  console.log('ICP备案号变化:', newVal)
+}, { immediate: true })
 
 // 用户信息
 const userInfo = ref({
@@ -173,13 +198,13 @@ const userInfo = ref({
   avatar: ''
 })
 
-// 检查是否已登录
+// 是否已登录
 const isLoggedIn = computed(() => {
   const token = localStorage.getItem('token')
   return !!token && !!userInfo.value.username
 })
 
-// 显示名称
+// 显示名称（优先显示nickname，如果没有则显示username）
 const displayName = computed(() => {
   return userInfo.value.nickname || userInfo.value.username || '用户'
 })
@@ -580,6 +605,27 @@ onMounted(() => {
 
 .divider {
   margin: 0 10px;
+}
+
+/* 公安网备信息样式 */
+.beian-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #a0a0a0;
+  font-size: 12px;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.beian-link:hover {
+  color: white;
+}
+
+.beian-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
 }
 
 /* 响应式辅助 */
