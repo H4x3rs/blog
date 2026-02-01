@@ -5,6 +5,17 @@ import AdminLayout from '../layout/AdminLayout.vue'
 import { useSiteConfig, initSiteConfig } from '../store/site'
 import { updateSEO, setPageTitle } from '../utils/seo'
 
+// 清除所有用户相关的本地存储
+const clearUserData = () => {
+  localStorage.removeItem('token')
+  localStorage.removeItem('username')
+  localStorage.removeItem('nickname')
+  localStorage.removeItem('avatar')
+  localStorage.removeItem('loginProvider')
+  // 触发自定义事件，通知其他组件用户已登出
+  window.dispatchEvent(new CustomEvent('user-logout'))
+}
+
 const routes = [
   // 前台路由
   {
@@ -249,19 +260,21 @@ router.beforeEach((to, from, next) => {
   const isLoginRoute = to.path === '/login' || to.path === '/login-new' || to.path === '/register' || to.path.startsWith('/oauth/')
   const requiresAuth = to.meta.requiresAuth
   
-  // 如果需要登录但未登录，重定向到登录页
+  // 如果需要登录但未登录，清除用户数据并重定向到登录页
   if (requiresAuth && !token) {
+    clearUserData()
     next({
-      path: '/login-new',
+      path: '/login',
       query: { redirect: to.fullPath } // 保存原始路径，登录后可以跳转回来
     })
     return
   }
   
-  // 如果是管理后台路由且未登录，重定向到登录页
+  // 如果是管理后台路由且未登录，清除用户数据并重定向到登录页
   if (isAdminRoute && !token) {
+    clearUserData()
     next({
-      path: '/login-new',
+      path: '/login',
       query: { redirect: to.fullPath } // 保存原始路径，登录后可以跳转回来
     })
     return

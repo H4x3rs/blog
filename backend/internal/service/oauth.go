@@ -107,10 +107,19 @@ func (s *sOAuth) HandleCallback(ctx context.Context, provider, code, state strin
 	}
 
 	// 生成 JWT token
-	token, err := utils.GenerateToken(user.Id, user.Username)
+	token, err := utils.GenerateToken(ctx, user.Id, user.Username)
 	if err != nil {
 		return nil, fmt.Errorf("生成token失败: %v", err)
 	}
+
+	// 将token存储到Redis
+	err = Token.SetToken(ctx, user.Id, token)
+	if err != nil {
+		// 记录Redis存储失败日志，但不影响登录（降级处理）
+		g.Log().Warning(ctx, "存储token到Redis失败:", err)
+		// 继续执行，允许用户登录（降级到仅JWT验证）
+	}
+
 	userInfo.Token = token
 	userInfo.Username = user.Username
 	userInfo.Nickname = user.Nickname

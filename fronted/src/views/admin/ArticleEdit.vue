@@ -116,9 +116,7 @@
               :label="tag.name"
               :value="tag.id"
             >
-              <span style="display: flex; align-items: center; gap: 8px">
-                <el-tag :color="tag.color" effect="plain" size="small">{{ tag.name }}</el-tag>
-              </span>
+              {{ tag.name }}
             </el-option>
           </el-select>
         </el-form-item>

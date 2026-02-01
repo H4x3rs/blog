@@ -68,7 +68,16 @@
           
           <div class="article-footer">
             <div class="tags-list">
-              <el-tag v-for="tag in article.tags" :key="tag" class="tag-item" effect="plain"># {{ tag }}</el-tag>
+              <el-tag 
+                v-for="tag in article.tags" 
+                :key="typeof tag === 'object' ? tag.id : tag" 
+                class="tag-item" 
+                effect="plain"
+                @click="goToTag(tag)"
+                style="cursor: pointer;"
+              >
+                # {{ typeof tag === 'object' ? tag.name : tag }}
+              </el-tag>
             </div>
             <div class="actions">
                <el-button type="primary" plain round size="small">
@@ -92,12 +101,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Star, Share } from '@element-plus/icons-vue'
 import { marked } from 'marked'
 import { getArticle } from '@/api/article'
 import { ElMessage } from 'element-plus'
+import { updateSEO, generateArticleSEO } from '@/utils/seo'
+import { useSiteConfig } from '@/store/site'
 
 const route = useRoute()
 const router = useRouter()
@@ -115,6 +126,7 @@ const article = ref({
 })
 
 const loading = ref(true)
+const { siteName, bannerSubtitle } = useSiteConfig()
 
 // 格式化日期
 const formatDate = (dateStr) => {
@@ -147,10 +159,15 @@ const loadArticle = async () => {
         createdAt: formatDate(res.createdAt),
         views: res.views || 0,
         cover: res.coverImage || 'https://picsum.photos/id/' + res.id + '/1200/600',
-        tags: res.tags ? (typeof res.tags === 'string' ? res.tags.split(',') : res.tags) : [],
+        tags: res.tags && Array.isArray(res.tags) ? res.tags : [],
         content: res.content || '',
-        publishedByUser: res.publishedByUser || null
+        publishedByUser: res.publishedByUser || null,
+        topic: res.topic || null,
+        updatedAt: res.updatedAt || res.createdAt
       }
+      
+      // 更新SEO信息
+      updateArticleSEO(res)
     }
   } catch (error) {
     console.error('加载文章失败:', error)
@@ -159,6 +176,53 @@ const loadArticle = async () => {
     loading.value = false
   }
 }
+
+// 更新文章SEO信息
+const updateArticleSEO = (articleData) => {
+  const siteUrl = window.location.origin
+  
+  // 使用文章的 coverImage 字段
+  const coverImage = articleData.coverImage || null
+  
+  // 使用当前页面的完整URL（包含hash路由）
+  const articleUrl = window.location.href
+  
+  const seoConfig = generateArticleSEO(
+    {
+      id: articleData.id,
+      title: articleData.title || '',
+      desc: articleData.desc || articleData.title || '',
+      coverImage: coverImage,
+      tags: articleData.tags ? (typeof articleData.tags === 'string' ? articleData.tags.split(',') : articleData.tags) : [],
+      category: articleData.categoryName || '',
+      createdAt: articleData.createdAt || '',
+      updatedAt: articleData.updatedAt || articleData.createdAt || '',
+      publishedByUser: articleData.publishedByUser || null
+    },
+    siteName.value || 'Blog System',
+    bannerSubtitle.value || '分享编程心得，记录技术成长',
+    siteUrl
+  )
+  
+  // 覆盖URL为当前页面的完整URL（包含hash）
+  seoConfig.url = articleUrl
+  
+  // 更新SEO meta标签
+  // - title: 使用文章标题
+  // - image: 使用文章的 coverImage（如果存在），否则使用默认logo
+  // - Open Graph 和 Twitter Card 都会使用文章的封面图片
+  updateSEO(seoConfig)
+  
+  // 浏览器标签页的 title 使用带网站名称的完整标题
+  document.title = `${articleData.title || '文章详情'} - ${siteName.value || 'Blog System'}`
+}
+
+// 监听路由参数变化，确保切换文章时也能更新SEO
+watch(() => route.params.id, (newId) => {
+  if (newId) {
+    loadArticle()
+  }
+}, { immediate: false })
 
 // 处理专题链接点击
 onMounted(() => {
@@ -183,6 +247,18 @@ const handleLinkClick = (e) => {
 const goToAuthorArticles = (user) => {
   if (user && user.id) {
     router.push(`/author/${user.id}`)
+  }
+}
+
+// 跳转到标签页面
+const goToTag = (tag) => {
+  if (!tag) return
+  const tagId = typeof tag === 'object' ? tag.id : tag
+  const tagName = typeof tag === 'object' ? tag.name : tag
+  if (tagId) {
+    router.push(`/tag/${tagId}`)
+  } else if (tagName) {
+    router.push(`/tag?name=${encodeURIComponent(tagName)}`)
   }
 }
 
@@ -334,9 +410,45 @@ const renderedContent = computed(() => {
   color: inherit;
   padding: 0;
 }
+/* 无序列表样式 */
 :deep(.markdown-body ul) {
   padding-left: 20px;
   margin-bottom: 16px;
+  list-style-type: disc;
+  list-style-position: outside;
+}
+:deep(.markdown-body ul li) {
+  margin-bottom: 8px;
+  line-height: 1.8;
+  list-style-type: disc;
+}
+:deep(.markdown-body ul ul) {
+  list-style-type: circle;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+:deep(.markdown-body ul ul ul) {
+  list-style-type: square;
+}
+/* 有序列表样式 */
+:deep(.markdown-body ol) {
+  padding-left: 20px;
+  margin-bottom: 16px;
+  list-style-type: decimal;
+  list-style-position: outside;
+}
+:deep(.markdown-body ol li) {
+  margin-bottom: 8px;
+  line-height: 1.8;
+  list-style-type: decimal;
+}
+:deep(.markdown-body ol ol) {
+  list-style-type: lower-alpha;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+:deep(.markdown-body ol ol ol) {
+  list-style-type: lower-roman;
 }
 :deep(.markdown-body img) {
     max-width: 100%;
@@ -351,6 +463,21 @@ const renderedContent = computed(() => {
   border-radius: 4px;
   color: #606266;
 }
+/* 普通超链接样式 */
+:deep(.markdown-body a:not(.topic-link)) {
+  color: #409eff;
+  text-decoration: underline;
+  text-decoration-color: rgba(64, 158, 255, 0.3);
+  transition: all 0.3s ease;
+}
+:deep(.markdown-body a:not(.topic-link):hover) {
+  color: #66b1ff;
+  text-decoration-color: rgba(102, 177, 255, 0.6);
+}
+:deep(.markdown-body a:not(.topic-link):visited) {
+  color: #7c3aed;
+}
+/* 专题链接样式 */
 :deep(.markdown-body a.topic-link) {
   color: #409eff;
   text-decoration: none;

@@ -25,23 +25,33 @@ export function updateSEO(options = {}) {
     article = null
   } = options
 
+  // 更新页面标题（title标签不是meta标签，需要特殊处理）
+  if (title) {
+    document.title = title
+  }
+  
   // 更新基础meta标签
-  updateMetaTag('title', title)
   updateMetaTag('description', description, 'name')
   updateMetaTag('keywords', keywords, 'name')
 
   // 更新Open Graph标签
   updateMetaTag('og:title', title, 'property')
   updateMetaTag('og:description', description, 'property')
-  updateMetaTag('og:image', image, 'property')
+  updateMetaTag('og:image', image, 'property') // 使用文章的 coverImage
   updateMetaTag('og:url', url, 'property')
   updateMetaTag('og:type', type, 'property')
+  
+  // 添加 og:image:width 和 og:image:height（可选，有助于社交媒体平台显示）
+  if (image) {
+    updateMetaTag('og:image:width', '1200', 'property')
+    updateMetaTag('og:image:height', '630', 'property')
+  }
 
   // 更新Twitter Card标签
   updateMetaTag('twitter:card', 'summary_large_image', 'name')
   updateMetaTag('twitter:title', title, 'name')
   updateMetaTag('twitter:description', description, 'name')
-  updateMetaTag('twitter:image', image, 'name')
+  updateMetaTag('twitter:image', image, 'name') // 使用文章的 coverImage
 
   // 如果是文章，添加文章相关的meta标签
   if (article && type === 'article') {
@@ -71,7 +81,10 @@ export function updateSEO(options = {}) {
  * @param {number} index 索引（用于多个相同名称的标签）
  */
 function updateMetaTag(name, content, attr = 'name', index = null) {
-  if (!content) return
+  // 对于图片等标签，即使为空也要更新（设置为空字符串）
+  // 但对于其他标签，如果内容为空则跳过
+  const allowEmpty = ['og:image', 'twitter:image', 'image'].includes(name)
+  if (!content && !allowEmpty) return
 
   const selector = index !== null 
     ? `meta[${attr}="${name}"]:nth-of-type(${index + 1})`
@@ -85,7 +98,7 @@ function updateMetaTag(name, content, attr = 'name', index = null) {
     document.head.appendChild(meta)
   }
   
-  meta.setAttribute('content', content)
+  meta.setAttribute('content', content || '')
 }
 
 /**
@@ -180,12 +193,34 @@ export function setPageTitle(title, siteName = 'Blog System') {
  * @returns {Object} SEO配置对象
  */
 export function generateArticleSEO(article, siteName, siteDesc, siteUrl) {
-  const articleUrl = `${siteUrl}/article/${article.id}`
-  const articleImage = article.coverImage 
-    ? (article.coverImage.startsWith('http') 
-        ? article.coverImage 
-        : `${siteUrl}${article.coverImage}`)
-    : `${siteUrl}/logo-512x512.png`
+  // 使用 hash 路由格式（因为使用的是 createWebHashHistory）
+  const articleUrl = `${siteUrl}/#/article/${article.id}`
+  
+  // 处理文章封面图片（coverImage），确保使用正确的图片路径
+  // 优先使用文章的 coverImage，如果没有则使用默认logo
+  let articleImage = article.coverImage || null
+  
+  // 检查 coverImage 是否有效（不为 null、undefined、空字符串）
+  const hasValidCoverImage = articleImage && 
+                             typeof articleImage === 'string' && 
+                             articleImage.trim() !== ''
+  
+  if (hasValidCoverImage) {
+    // 如果已经是完整的URL（http:// 或 https://），直接使用
+    if (articleImage.startsWith('http://') || articleImage.startsWith('https://')) {
+      // 已经是完整URL，直接使用
+    } else {
+      // 相对路径，需要转换为绝对路径
+      // 如果路径不是以 / 开头，添加 /
+      if (!articleImage.startsWith('/')) {
+        articleImage = `/${articleImage}`
+      }
+      articleImage = `${siteUrl}${articleImage}`
+    }
+  } else {
+    // 文章没有 coverImage 或 coverImage 为空，使用默认logo
+    articleImage = `${siteUrl}/logo-512x512.png`
+  }
 
   return {
     title: article.title,

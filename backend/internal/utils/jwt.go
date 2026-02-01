@@ -1,18 +1,23 @@
 package utils
 
 import (
+	"context"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 var jwtSecret []byte
+var jwtExpiresHours int
 
-// 初始化JWT密钥
+// 初始化JWT配置
 func init() {
 	// 优先从环境变量读取，如果没有则从配置文件读取，最后使用默认值
 	secret := GetConfigString(nil, "JWT_SECRET", "jwt.secret", "your-secret-key-change-in-production")
 	jwtSecret = []byte(secret)
+	
+	// 读取JWT过期时间（单位：小时），默认7天（168小时）
+	jwtExpiresHours = GetConfigInt(nil, "JWT_EXPIRES_HOURS", "jwt.expiresHours", 168)
 }
 
 // Claims JWT claims结构
@@ -23,9 +28,15 @@ type Claims struct {
 }
 
 // GenerateToken 生成JWT token
-func GenerateToken(userID int, username string) (string, error) {
-	// 设置过期时间（默认7天）
-	expirationTime := time.Now().Add(7 * 24 * time.Hour)
+func GenerateToken(ctx context.Context, userID int, username string) (string, error) {
+	// 从配置文件读取过期时间（单位：小时）
+	expiresHours := GetConfigInt(ctx, "JWT_EXPIRES_HOURS", "jwt.expiresHours", jwtExpiresHours)
+	if expiresHours <= 0 {
+		expiresHours = 168 // 默认7天
+	}
+	
+	// 设置过期时间
+	expirationTime := time.Now().Add(time.Duration(expiresHours) * time.Hour)
 	
 	claims := &Claims{
 		UserID:   userID,
@@ -45,6 +56,15 @@ func GenerateToken(userID int, username string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+// GetTokenExpiresHours 获取token过期时间（单位：小时）
+func GetTokenExpiresHours(ctx context.Context) int {
+	expiresHours := GetConfigInt(ctx, "JWT_EXPIRES_HOURS", "jwt.expiresHours", jwtExpiresHours)
+	if expiresHours <= 0 {
+		return 168 // 默认7天
+	}
+	return expiresHours
 }
 
 // ParseToken 解析JWT token

@@ -3,12 +3,15 @@ package user
 import (
 	"context"
 	"errors"
+	"net/http"
 
 	"blog/internal/dao"
 	"blog/internal/model/entity"
 	"blog/internal/service"
 	"blog/internal/utils"
 
+	"github.com/gogf/gf/v2/errors/gcode"
+	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gogf/gf/v2/frame/g"
 	"github.com/gogf/gf/v2/os/glog"
 )
@@ -106,11 +109,19 @@ func (c *ControllerV1) Login(ctx context.Context, req *LoginReq) (res *LoginRes,
 	}
 
 	// 生成JWT token
-	token, err := utils.GenerateToken(user.Id, user.Username)
+	token, err := utils.GenerateToken(ctx, user.Id, user.Username)
 	if err != nil {
 		// 记录token生成失败日志
 		service.OperationLog.LogOperation(ctx, user.Id, user.Username, "login", "user", "用户登录成功但token生成失败", "POST", "/user/login", ipAddress, userAgent, 0, req, err.Error())
 		return nil, err
+	}
+
+	// 将token存储到Redis
+	err = service.Token.SetToken(ctx, user.Id, token)
+	if err != nil {
+		// 记录Redis存储失败日志，但不影响登录（降级处理）
+		g.Log().Warning(ctx, "存储token到Redis失败:", err)
+		// 继续执行，允许用户登录（降级到仅JWT验证）
 	}
 
 	// 记录登录成功日志
@@ -243,7 +254,8 @@ func (c *ControllerV1) UpdateProfile(ctx context.Context, req *UpdateProfileReq)
 	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
 
 	if userID == 0 {
-		return nil, errors.New("未登录或token无效")
+		g.RequestFromCtx(ctx).Response.WriteStatus(http.StatusUnauthorized)
+		return nil, gerror.NewCode(gcode.New(401, "未登录或token无效", nil), "未登录或token无效")
 	}
 
 	err = service.User.Update(ctx, &entity.User{
@@ -279,7 +291,8 @@ func (c *ControllerV1) GetCurrentUser(ctx context.Context, req *GetCurrentUserRe
 	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
 
 	if userID == 0 {
-		return nil, errors.New("未登录或token无效")
+		g.RequestFromCtx(ctx).Response.WriteStatus(http.StatusUnauthorized)
+		return nil, gerror.NewCode(gcode.New(401, "未登录或token无效", nil), "未登录或token无效")
 	}
 
 	user, err := service.User.GetOne(ctx, userID)
@@ -334,7 +347,8 @@ func (c *ControllerV1) GetCurrentUserPermissions(ctx context.Context, req *GetCu
 	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
 
 	if userID == 0 {
-		return nil, errors.New("未登录或token无效")
+		g.RequestFromCtx(ctx).Response.WriteStatus(http.StatusUnauthorized)
+		return nil, gerror.NewCode(gcode.New(401, "未登录或token无效", nil), "未登录或token无效")
 	}
 
 	permissionCodes, err := service.User.GetPermissions(ctx, userID)
@@ -357,7 +371,8 @@ func (c *ControllerV1) GetCurrentUserRoles(ctx context.Context, req *GetCurrentU
 	userID := g.RequestFromCtx(ctx).GetCtxVar("user_id", 0).Int()
 
 	if userID == 0 {
-		return nil, errors.New("未登录或token无效")
+		g.RequestFromCtx(ctx).Response.WriteStatus(http.StatusUnauthorized)
+		return nil, gerror.NewCode(gcode.New(401, "未登录或token无效", nil), "未登录或token无效")
 	}
 
 	roleIds, err := service.User.GetRoles(ctx, userID)

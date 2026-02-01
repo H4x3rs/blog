@@ -232,58 +232,64 @@ const userAvatar = computed(() => {
   return userInfo.value.avatar || ''
 })
 
-// 加载用户信息
+// 加载用户信息（同时验证token有效性）
 const loadUserInfo = async () => {
-  // 先从localStorage读取
+  const token = localStorage.getItem('token')
+  
+  // 没有token，清空用户信息并跳转到登录页
+  if (!token) {
+    clearUserInfo()
+    redirectToLogin()
+    return
+  }
+  
+  // 先从localStorage读取（快速显示）
   const username = localStorage.getItem('username')
   const nickname = localStorage.getItem('nickname')
   const avatar = localStorage.getItem('avatar')
   
-  // 立即显示localStorage中的信息（快速显示）
   if (username) {
     userInfo.value.username = username
     userInfo.value.nickname = nickname || ''
     userInfo.value.avatar = avatar || ''
   }
   
-  // 如果有token，尝试从后端获取完整用户信息
-  const token = localStorage.getItem('token')
-  if (token) {
-    try {
-      const res = await getCurrentUser()
-      if (res) {
-        // 处理响应数据（可能是嵌套的User对象）
-        const userData = res.user || res
-        userInfo.value.username = userData.username || username || ''
-        userInfo.value.nickname = userData.nickname || nickname || ''
-        userInfo.value.avatar = userData.avatar || avatar || ''
-        
-        // 更新localStorage
-        if (userData.username) {
-          localStorage.setItem('username', userData.username)
-        }
-        if (userData.nickname) {
-          localStorage.setItem('nickname', userData.nickname)
-        }
-        if (userData.avatar) {
-          localStorage.setItem('avatar', userData.avatar)
-        }
+  // 调用后端API验证token有效性
+  try {
+    const res = await getCurrentUser()
+    if (res) {
+      // 处理响应数据（可能是嵌套的User对象）
+      const userData = res.user || res
+      userInfo.value.username = userData.username || username || ''
+      userInfo.value.nickname = userData.nickname || nickname || ''
+      userInfo.value.avatar = userData.avatar || avatar || ''
+      
+      // 更新localStorage
+      if (userData.username) {
+        localStorage.setItem('username', userData.username)
       }
-    } catch (error) {
-      // 如果获取失败，使用localStorage中的信息
-      console.warn('获取用户信息失败:', error)
-      // 确保至少显示localStorage中的信息
-      if (!userInfo.value.username && username) {
-        userInfo.value.username = username
-        userInfo.value.nickname = nickname || ''
-        userInfo.value.avatar = avatar || ''
+      if (userData.nickname) {
+        localStorage.setItem('nickname', userData.nickname)
+      }
+      if (userData.avatar) {
+        localStorage.setItem('avatar', userData.avatar)
       }
     }
-  } else {
-    // 没有token，清空用户信息
-    userInfo.value.username = ''
-    userInfo.value.nickname = ''
-    userInfo.value.avatar = ''
+  } catch (error) {
+    // API调用失败，可能是token无效
+    console.warn('获取用户信息失败:', error)
+    // 注意：401错误会在request.js中处理，这里不需要额外处理
+  }
+}
+
+// 跳转到登录页
+const redirectToLogin = () => {
+  const currentPath = route.path
+  if (currentPath.startsWith('/admin')) {
+    router.push({
+      path: '/login',
+      query: { redirect: currentPath }
+    })
   }
 }
 
@@ -340,10 +346,23 @@ const loadUserMenus = async () => {
   }
 }
 
+// 清除用户信息
+const clearUserInfo = () => {
+  userInfo.value.username = ''
+  userInfo.value.nickname = ''
+  userInfo.value.avatar = ''
+  menuList.value = []
+}
+
 // 页面加载时加载用户信息和菜单
 onMounted(() => {
   loadUserInfo()
   loadUserMenus()
+  
+  // 监听用户登出事件（由 request.js 或 router 触发）
+  window.addEventListener('user-logout', () => {
+    clearUserInfo()
+  })
 })
 
 // 监听路由变化，重新加载用户信息和菜单（防止从其他页面跳转过来时信息丢失）

@@ -4,7 +4,7 @@
       <div class="header-inner">
         <div class="logo" @click="$router.push('/')">
           <span class="logo-icon">B</span>
-          <span class="logo-text">{{ siteName || 'Blog System' }}</span>
+          <span class="logo-text">Blog System</span>
         </div>
         
         <!-- Desktop Nav -->
@@ -25,25 +25,27 @@
         </div>
 
         <div class="actions hidden-xs-only">
-          <!-- 已登录：显示用户信息 -->
-          <el-dropdown v-if="isLoggedIn" trigger="click" class="user-dropdown">
-            <span class="user-info-link">
-              <el-avatar :size="32" :src="userAvatar">
-                <el-icon v-if="!userAvatar"><User /></el-icon>
-              </el-avatar>
-              <span class="username-text">{{ displayName }}</span>
-              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item @click="$router.push('/admin/dashboard')">管理后台</el-dropdown-item>
-                <el-dropdown-item @click="$router.push('/admin/profile')">个人中心</el-dropdown-item>
-                <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-          <!-- 未登录：显示登录按钮 -->
-          <el-button v-else class="login-btn" round @click="$router.push('/login')">登录 / 注册</el-button>
+          <template v-if="isLoggedIn">
+            <el-dropdown @command="handleCommand">
+              <div class="user-info">
+                <el-avatar :size="32" :src="userAvatar">
+                  <el-icon v-if="!userAvatar"><User /></el-icon>
+                </el-avatar>
+                <span class="username">{{ displayName }}</span>
+                <el-icon class="dropdown-icon"><ArrowDown /></el-icon>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                  <el-dropdown-item command="myArticles">我的文章</el-dropdown-item>
+                  <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+          <template v-else>
+            <el-button class="login-btn" round @click="$router.push('/login')">登录 / 注册</el-button>
+          </template>
         </div>
 
         <!-- Mobile Menu Toggle -->
@@ -74,30 +76,22 @@
             <el-menu-item index="/about" @click="mobileMenuVisible = false">关于</el-menu-item>
           </el-menu>
           <div class="mobile-actions">
-            <!-- 已登录：显示用户信息 -->
-            <div v-if="isLoggedIn" class="mobile-user-info">
-              <el-dropdown trigger="click" @visible-change="mobileMenuVisible = false">
-                <div class="mobile-user-card">
-                  <el-avatar :size="40" :src="userAvatar">
-                    <el-icon v-if="!userAvatar"><User /></el-icon>
-                  </el-avatar>
-                  <div class="mobile-user-details">
-                    <div class="mobile-username">{{ displayName }}</div>
-                    <div class="mobile-user-email">{{ userInfo.username }}</div>
-                  </div>
-                  <el-icon><ArrowDown /></el-icon>
+            <template v-if="isLoggedIn">
+              <div class="mobile-user-info">
+                <el-avatar :size="40" :src="userAvatar">
+                  <el-icon v-if="!userAvatar"><User /></el-icon>
+                </el-avatar>
+                <div class="mobile-user-details">
+                  <div class="mobile-username">{{ displayName }}</div>
                 </div>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item @click="$router.push('/admin/dashboard')">管理后台</el-dropdown-item>
-                    <el-dropdown-item @click="$router.push('/admin/profile')">个人中心</el-dropdown-item>
-                    <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </div>
-            <!-- 未登录：显示登录按钮 -->
-            <el-button v-else class="login-btn" block @click="$router.push('/login-new'); mobileMenuVisible = false">登录 / 注册</el-button>
+              </div>
+              <el-button class="mobile-btn" block @click="handleCommand('profile'); mobileMenuVisible = false">个人中心</el-button>
+              <el-button class="mobile-btn" block @click="handleCommand('myArticles'); mobileMenuVisible = false">我的文章</el-button>
+              <el-button class="mobile-btn logout-btn" block @click="handleCommand('logout'); mobileMenuVisible = false">退出登录</el-button>
+            </template>
+            <template v-else>
+              <el-button class="login-btn" block @click="$router.push('/login'); mobileMenuVisible = false">登录 / 注册</el-button>
+            </template>
           </div>
        </div>
     </el-drawer>
@@ -113,7 +107,7 @@
           <el-col :span="8" :xs="24" class="footer-col">
             <div class="footer-logo">
               <span class="logo-icon small">B</span>
-              <span class="logo-text-light">{{ siteName || 'Blog System' }}</span>
+              <span class="logo-text-light">Blog System</span>
             </div>
             <p class="footer-desc">
               探索技术之美，记录成长足迹。
@@ -150,20 +144,9 @@
       
       <div class="footer-bottom">
         <div class="copyright">
-           &copy; 2024 {{ siteName || 'Blog System' }}. All rights reserved. 
-           <span v-if="icpNumber || publicSecurityBeian" class="divider">|</span> 
-           <a v-if="icpNumber" :href="`https://beian.miit.gov.cn/`" target="_blank" rel="noopener noreferrer">{{ icpNumber }}</a>
-           <span v-if="icpNumber && publicSecurityBeian" class="divider">|</span>
-           <a 
-             v-if="publicSecurityBeian"
-             :href="`http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=${publicSecurityBeianCode}`" 
-             target="_blank" 
-             rel="noopener noreferrer"
-             class="beian-link"
-           >
-             <img src="https://www.beian.gov.cn/img/ghs.png" alt="公安备案图标" class="beian-icon" />
-             {{ publicSecurityBeian }}
-           </a>
+           &copy; 2024 Blog System. All rights reserved. 
+           <span class="divider">|</span> 
+           <a href="#">京ICP备88888888号</a>
         </div>
         <div class="powered-by">
            Powered by GoFrame & Vue 3
@@ -174,28 +157,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { Menu, Message, Location, User, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { useSiteConfig } from '../store/site'
-import { getCurrentUser } from '../api/user'
 import 'element-plus/theme-chalk/display.css' // Helper classes for responsive
 
 const router = useRouter()
-const route = useRoute()
 const mobileMenuVisible = ref(false)
-const { siteName, icpNumber } = useSiteConfig()
-
-// 公安网备信息 - 可以从配置中获取，这里先使用示例值
-// 格式示例：京公网安备 11010802012345号
-const publicSecurityBeian = ref('京公网安备11011102002752号') // 请根据实际情况修改
-const publicSecurityBeianCode = ref('11011102002752') // 备案号中的数字部分，用于链接
-
-// 调试日志
-watch(icpNumber, (newVal) => {
-  console.log('ICP备案号变化:', newVal)
-}, { immediate: true })
 
 // 用户信息
 const userInfo = ref({
@@ -204,13 +173,13 @@ const userInfo = ref({
   avatar: ''
 })
 
-// 是否已登录
+// 检查是否已登录
 const isLoggedIn = computed(() => {
   const token = localStorage.getItem('token')
   return !!token && !!userInfo.value.username
 })
 
-// 显示名称（优先显示nickname，如果没有则显示username）
+// 显示名称
 const displayName = computed(() => {
   return userInfo.value.nickname || userInfo.value.username || '用户'
 })
@@ -222,101 +191,94 @@ const userAvatar = computed(() => {
 
 // 加载用户信息
 const loadUserInfo = async () => {
-  // 先从localStorage读取
+  const token = localStorage.getItem('token')
+  if (!token) {
+    userInfo.value.username = ''
+    userInfo.value.nickname = ''
+    userInfo.value.avatar = ''
+    return
+  }
+
   const username = localStorage.getItem('username')
   const nickname = localStorage.getItem('nickname')
   const avatar = localStorage.getItem('avatar')
-  
-  // 立即显示localStorage中的信息（快速显示）
+
   if (username) {
     userInfo.value.username = username
     userInfo.value.nickname = nickname || ''
     userInfo.value.avatar = avatar || ''
   }
-  
-  // 如果有token，尝试从后端获取完整用户信息
-  const token = localStorage.getItem('token')
-  if (token) {
+}
+
+// 处理下拉菜单命令
+const handleCommand = async (command) => {
+  if (command === 'logout') {
     try {
-      const res = await getCurrentUser()
-      if (res) {
-        // 处理响应数据（可能是嵌套的User对象）
-        const userData = res.user || res
-        userInfo.value.username = userData.username || username || ''
-        userInfo.value.nickname = userData.nickname || nickname || ''
-        userInfo.value.avatar = userData.avatar || avatar || ''
-        
-        // 更新localStorage
-        if (userData.username) {
-          localStorage.setItem('username', userData.username)
+      await ElMessageBox.confirm(
+        '确定要退出登录吗？',
+        '确认退出',
+        {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
         }
-        if (userData.nickname) {
-          localStorage.setItem('nickname', userData.nickname)
-        }
-        if (userData.avatar) {
-          localStorage.setItem('avatar', userData.avatar)
-        }
+      )
+      
+      // 清除本地存储
+      localStorage.removeItem('token')
+      localStorage.removeItem('username')
+      localStorage.removeItem('nickname')
+      localStorage.removeItem('avatar')
+      localStorage.removeItem('loginProvider')
+      
+      // 清除用户信息
+      userInfo.value.username = ''
+      userInfo.value.nickname = ''
+      userInfo.value.avatar = ''
+      
+      ElMessage.success('已退出登录')
+      
+      // 如果当前在需要登录的页面，跳转到首页
+      if (router.currentRoute.value.path.startsWith('/admin') || router.currentRoute.value.path === '/my-articles') {
+        router.push('/')
       }
-    } catch (error) {
-      // 如果获取失败，使用localStorage中的信息
-      console.warn('获取用户信息失败:', error)
-      // 确保至少显示localStorage中的信息
-      if (!userInfo.value.username && username) {
-        userInfo.value.username = username
-        userInfo.value.nickname = nickname || ''
-        userInfo.value.avatar = avatar || ''
-      }
+    } catch {
+      // 用户取消
     }
-  } else {
-    // 没有token，清空用户信息
-    userInfo.value.username = ''
-    userInfo.value.nickname = ''
-    userInfo.value.avatar = ''
+  } else if (command === 'profile') {
+    router.push('/admin/profile')
+  } else if (command === 'myArticles') {
+    router.push('/my-articles')
   }
 }
 
-// 退出登录
-const handleLogout = async () => {
-  try {
-    await ElMessageBox.confirm(
-      '确定要退出登录吗？',
-      '确认退出',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    
-    // 清除localStorage中的用户信息
-    localStorage.removeItem('token')
-    localStorage.removeItem('username')
-    localStorage.removeItem('nickname')
-    localStorage.removeItem('avatar')
-    localStorage.removeItem('loginProvider')
-    
-    // 清空用户信息
-    userInfo.value.username = ''
-    userInfo.value.nickname = ''
-    userInfo.value.avatar = ''
-    
-    ElMessage.success('已退出登录')
-    
-    // 跳转到首页
-    router.push('/')
-  } catch {
-    // 用户取消
-  }
+// 监听token变化
+watch(() => localStorage.getItem('token'), () => {
+  loadUserInfo()
+}, { immediate: false })
+
+// 清除用户信息
+const clearUserInfo = () => {
+  userInfo.value.username = ''
+  userInfo.value.nickname = ''
+  userInfo.value.avatar = ''
 }
 
-// 页面加载时加载用户信息
+// 初始化
 onMounted(() => {
   loadUserInfo()
-})
-
-// 监听路由变化，重新加载用户信息
-watch(() => route.path, () => {
-  loadUserInfo()
+  
+  // 监听storage变化（跨标签页同步）
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'token' || e.key === 'username' || e.key === 'nickname' || e.key === 'avatar') {
+      loadUserInfo()
+    }
+  })
+  
+  // 监听用户登出事件（由 request.js 或 router 触发）
+  window.addEventListener('user-logout', () => {
+    clearUserInfo()
+  })
 })
 </script>
 
@@ -394,6 +356,32 @@ watch(() => route.path, () => {
 .actions {
   display: flex;
   align-items: center;
+  gap: 12px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 20px;
+  transition: all 0.3s;
+}
+
+.user-info:hover {
+  background-color: #f5f7fa;
+}
+
+.username {
+  font-size: 14px;
+  color: #303133;
+  font-weight: 500;
+}
+
+.dropdown-icon {
+  font-size: 12px;
+  color: #909399;
 }
 
 .mobile-menu-toggle {
@@ -413,6 +401,40 @@ watch(() => route.path, () => {
 
 .mobile-actions {
   padding: 20px;
+}
+
+.mobile-user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+}
+
+.mobile-user-details {
+  flex: 1;
+}
+
+.mobile-username {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.mobile-btn {
+  margin-bottom: 12px;
+}
+
+.mobile-btn.logout-btn {
+  color: #f56c6c;
+  border-color: #f56c6c;
+}
+
+.mobile-btn.logout-btn:hover {
+  background-color: #f56c6c;
+  color: white;
 }
 
 .main-content {
@@ -441,77 +463,6 @@ watch(() => route.path, () => {
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
-}
-
-/* User Dropdown Style */
-.user-dropdown {
-  cursor: pointer;
-}
-
-.user-info-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 12px;
-  border-radius: 20px;
-  transition: all 0.3s;
-  color: #303133;
-}
-
-.user-info-link:hover {
-  background-color: #f5f7fa;
-}
-
-.username-text {
-  font-size: 14px;
-  font-weight: 500;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Mobile User Info */
-.mobile-user-info {
-  padding: 16px 20px;
-}
-
-.mobile-user-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  background-color: #f5f7fa;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.mobile-user-card:hover {
-  background-color: #e9ecef;
-}
-
-.mobile-user-details {
-  flex: 1;
-  min-width: 0;
-}
-
-.mobile-username {
-  font-size: 15px;
-  font-weight: 600;
-  color: #303133;
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.mobile-user-email {
-  font-size: 12px;
-  color: #909399;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Footer Styling */
@@ -629,27 +580,6 @@ watch(() => route.path, () => {
 
 .divider {
   margin: 0 10px;
-}
-
-/* 公安网备信息样式 */
-.beian-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #a0a0a0;
-  font-size: 12px;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.beian-link:hover {
-  color: white;
-}
-
-.beian-icon {
-  width: 14px;
-  height: 14px;
-  vertical-align: middle;
 }
 
 /* 响应式辅助 */

@@ -25,6 +25,7 @@ type CreateReq struct {
 	CoverImage string `json:"coverImage"`
 	CategoryId int    `json:"categoryId"`
 	Status     string `json:"status" d:"draft"`
+	TagIds     []int  `json:"tagIds"` // 标签ID列表
 }
 type CreateRes struct {
 	ID int `json:"id"`
@@ -37,6 +38,7 @@ type GetOneReq struct {
 type GetOneRes struct {
 	*entity.Article
 	PublishedByUser *entity.User `json:"publishedByUser,omitempty"`
+	Tags            []*entity.Tag `json:"tags,omitempty"` // 文章标签列表
 }
 
 type GetListReq struct {
@@ -70,6 +72,7 @@ type UpdateReq struct {
 	CoverImage string `json:"coverImage"`
 	CategoryId int    `json:"categoryId"`
 	Status     string `json:"status"`
+	TagIds     []int  `json:"tagIds"` // 标签ID列表
 }
 type UpdateRes struct{}
 
@@ -103,6 +106,22 @@ func (c *ControllerV1) Create(ctx context.Context, req *CreateReq) (res *CreateR
 	if err != nil {
 		return nil, err
 	}
+	
+	// 保存文章标签
+	if len(req.TagIds) > 0 {
+		err = service.Article.SetArticleTags(ctx, id, req.TagIds)
+		if err != nil {
+			// 如果保存标签失败，记录错误但不影响文章创建
+			g.Log().Errorf(ctx, "保存文章标签失败: %v", err)
+		}
+	} else {
+		// 如果没有标签，清空原有标签关联
+		err = service.Article.SetArticleTags(ctx, id, []int{})
+		if err != nil {
+			g.Log().Errorf(ctx, "清空文章标签失败: %v", err)
+		}
+	}
+	
 	return &CreateRes{ID: id}, nil
 }
 
@@ -130,6 +149,16 @@ func (c *ControllerV1) GetOne(ctx context.Context, req *GetOneReq) (res *GetOneR
 			user.Password = ""
 			res.PublishedByUser = user
 		}
+	}
+	
+	// 获取文章标签
+	tags, err := service.Article.GetArticleTags(ctx, req.ID)
+	if err == nil {
+		res.Tags = tags
+	} else {
+		// 如果获取标签失败，记录错误但不影响返回文章
+		g.Log().Errorf(ctx, "获取文章标签失败: %v", err)
+		res.Tags = []*entity.Tag{}
 	}
 	
 	return res, nil
@@ -208,6 +237,21 @@ func (c *ControllerV1) Update(ctx context.Context, req *UpdateReq) (res *UpdateR
 	}
 	
 	err = service.Article.Update(ctx, req.ID, article, userID)
+	if err != nil {
+		return nil, err
+	}
+	
+	// 更新文章标签
+	if req.TagIds != nil {
+		// 如果 TagIds 不为 nil，更新标签（即使为空数组也表示清空标签）
+		err = service.Article.SetArticleTags(ctx, req.ID, req.TagIds)
+		if err != nil {
+			// 如果更新标签失败，记录错误但不影响文章更新
+			g.Log().Errorf(ctx, "更新文章标签失败: %v", err)
+		}
+	}
+	// 如果 TagIds 为 nil，表示前端没有传递标签字段，不更新标签
+	
 	return
 }
 
